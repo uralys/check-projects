@@ -1,0 +1,58 @@
+# ============================================
+# check-projects - Configuration Example
+# ============================================
+#
+# A fast, cross-platform CLI tool to check the git status
+# of multiple projects organized by categories.
+#
+# Documentation: https://github.com/uralys/check-projects#readme
+#
+# Setup:
+# 1. Copy this file to ~/check-projects.yml or ./check-projects.yml
+# 2. Edit the configuration to match your project structure
+# 3. Run: check-projects
+#
+# ============================================
+
+categories:
+  # Simple category with explicit project list
+  - name: core
+    root: ~/
+    projects:
+      - dev-tools
+      - fox
+      - cherry
+
+  # Nested category - automatically scans folder/subfolder/project
+  - name: mozilla
+    root: ~/Projects/mozilla
+    nested: true
+
+  # Category with scan patterns
+  - name: uralys
+    root: ~/Projects/uralys
+    scan:
+      - web/*        # All projects in web/ directory
+      - gamedev/*    # All projects in gamedev/ directory
+
+  # Studio projects
+  - name: studio
+    root: ~/Music
+    projects:
+      - Ableton/User Library
+
+  # Another example with explicit projects
+  - name: mobile
+    root: ~/Projects/mobile
+    # Will scan all directories in this folder
+
+# Projects to ignore (glob patterns supported)
+ignored:
+  - my-deprecated-project
+  - "**/.DS_Store"
+  - "**/node_modules"
+
+# Display options
+display:
+  hide_clean: true      # Hide projects with ✔ status by default
+  hide_ignored: true    # Hide ignored projects from output
