@@ -68,19 +68,3 @@ changelog:
       order: 1
     - title: Others
       order: 999
-
-# Homebrew tap configuration
-brews:
-  - repository:
-      owner: uralys
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
-    homepage: https://github.com/uralys/check-projects
-    description: "A fast, cross-platform CLI tool to check the git status of multiple projects"
-    license: MIT
-    install: |
-      bin.install "check-projects"
-      (etc/"check-projects").install "check-projects.example.yml"
-    test: |
-      system "#{bin}/check-projects", "--version"

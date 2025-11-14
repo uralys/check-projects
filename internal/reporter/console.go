@@ -13,7 +13,6 @@ var (
 	red       = color.New(color.FgRed).SprintFunc()
 	greenBold = color.New(color.FgGreen, color.Bold).SprintFunc()
 	redBold   = color.New(color.FgRed, color.Bold).SprintFunc()
-	bold      = color.New(color.Bold).SprintFunc()
 	underline = color.New(color.Bold, color.Underline).SprintFunc()
 )
 

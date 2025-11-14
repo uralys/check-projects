@@ -46,5 +46,5 @@ dev: ## Run without building (using go run)
 	go run ./cmd/check-projects
 
 lint: ## Run linter
-	@which golangci-lint > /dev/null || (echo "golangci-lint not installed. Run: brew install golangci-lint"; exit 1)
+	@which golangci-lint > /dev/null || (echo "golangci-lint not installed. Run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; exit 1)
 	golangci-lint run

@@ -2,6 +2,32 @@
 
 A fast, cross-platform CLI tool to check the git status of multiple projects organized by categories.
 
+Run `check-projects` to see which of your projects have uncommitted changes, are ahead of remote, or have other git status indicators.
+
+## Output Example
+
+```sh
+x mozilla
+  * M firefox
+  ✱ ✚ thunderbird
+
+✔ godot
+
+x gamedev
+  ⬆ flying-ones
+  * M avindi
+```
+
+## Git Status Symbols
+
+- `✔` - Clean (synced with remote)
+- `⬆` - Ahead of remote
+- `⬆⬆` - Diverged from remote
+- `* M` - Modified files
+- `* D` - Deleted files
+- `✱ ✚` - Untracked files
+- `❌` - Error
+
 ## Features
 
 - **Multi-category organization**: Group your projects by team, client, or any category
@@ -13,22 +39,16 @@ A fast, cross-platform CLI tool to check the git status of multiple projects org
 
 ## Installation
 
-### Using Homebrew (macOS/Linux)
+### Quick Install (macOS/Linux)
 
 ```bash
-brew tap uralys/tap
-brew install check-projects
+curl -fsSL https://raw.githubusercontent.com/uralys/check-projects/main/install.sh | sh
 ```
 
-### From Source
+This will download the latest release and install it to `~/.local/bin/check-projects`.
 
-```bash
-git clone https://github.com/uralys/check-projects.git
-cd check-projects
-make install
-```
-
-### Download Binary
+<details>
+<summary><b>show manual Installation</b></summary>
 
 1. Download the latest release for your platform from [GitHub Releases](https://github.com/uralys/check-projects/releases)
 
@@ -50,6 +70,16 @@ mv check-projects ~/.local/bin/
 # Windows (PowerShell as Administrator)
 Move-Item check-projects.exe C:\Windows\System32\
 ```
+
+### From Source
+
+```bash
+git clone https://github.com/uralys/check-projects.git
+cd check-projects
+make install
+```
+
+</details>
 
 ## Quick Start
 
@@ -79,32 +109,20 @@ Configuration files are searched in this order:
 
 ```yaml
 categories:
-  # Simple category with explicit project list
+  # Mode 1: Explicit project list (using 'projects' field)
+  # Use full paths to specific git repositories
   - name: core
-    root: ~/
     projects:
-      - dev-tools
-      - my-project
+      - ~/fox
+      - ~/cherry
 
-  # Nested category - auto-scans folder/subfolder/project
-  - name: clients
-    root: ~/Projects/clients
-    nested: true
+  # Mode 2: Auto-scan directory (using 'root' field)
+  # Recursively scans for all git repositories in the directory
+  - name: godot
+    root: ~/Projects/godot
 
-  # Category with scan patterns
-  - name: web
-    root: ~/Projects
-    scan:
-      - frontend/*
-      - backend/*
-
-ignored:
-  - godot-google-play-billing
-  - "**/.DS_Store"
-
-display:
-  hide_clean: true      # Hide projects with ✔ status
-  hide_ignored: true    # Hide ignored projects
+  - name: uralys
+    root: ~/Projects/uralys
 ```
 
 ## Usage
@@ -118,34 +136,10 @@ check-projects --verbose
 check-projects -v
 
 # Check only specific category
-check-projects --category core
+check-projects --category gamedev
 
 # Use custom config file
 check-projects --config /path/to/config.yml
-```
-
-## Git Status Symbols
-
-- `✔` - Clean (synced with remote)
-- `⬆` - Ahead of remote
-- `⬆⬆` - Diverged from remote
-- `* M` - Modified files
-- `* D` - Deleted files
-- `✱ ✚` - Untracked files
-- `❌` - Error
-
-## Output Example
-
-```sh
-x alterego
-  * M project-a
-  ✱ ✚ project-b
-
-✔ core
-
-x nomodata
-  ⬆ nomosense/backend
-  * M nomosense/frontend
 ```
 
 ## Development
@@ -166,34 +160,3 @@ make test
 # Build for all platforms
 make release
 ```
-
-## Releasing
-
-Releases are automated using GitHub Actions and [GoReleaser](https://goreleaser.com/).
-
-### Creating a New Release
-
-1. **Tag the release:**
-
-```bash
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-2. **GitHub Actions will automatically:**
-   - Build binaries for all platforms (macOS, Linux, Windows)
-   - Create a GitHub Release with changelog
-   - Attach binaries and checksums
-   - Update the Homebrew tap (if configured)
-
-### First-time Setup
-
-To enable Homebrew tap updates, create a GitHub token and add it as a repository secret:
-
-1. Create a [Personal Access Token](https://github.com/settings/tokens) with `repo` scope
-2. Add it as `HOMEBREW_TAP_GITHUB_TOKEN` in repository secrets
-3. Create the `uralys/homebrew-tap` repository
-
-## License
-
-MIT

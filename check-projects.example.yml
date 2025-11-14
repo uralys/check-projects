@@ -1,7 +1,6 @@
 # ============================================
 # check-projects - Configuration Example
 # ============================================
-#
 # A fast, cross-platform CLI tool to check the git status
 # of multiple projects organized by categories.
 #
@@ -11,46 +10,28 @@
 # 1. Copy this file to ~/check-projects.yml or ./check-projects.yml
 # 2. Edit the configuration to match your project structure
 # 3. Run: check-projects
-#
 # ============================================
 
 categories:
-  # Simple category with explicit project list
+  # Mode 1: Explicit project list (using 'projects' field)
+  # Use full paths to specific git repositories
   - name: core
-    root: ~/
     projects:
-      - dev-tools
-      - fox
-      - cherry
+      - ~/fox
+      - ~/cherry
 
-  # Nested category - automatically scans folder/subfolder/project
+  # Mode 2: Auto-scan directory (using 'root' field)
+  # Recursively scans for all git repositories in the directory
   - name: mozilla
     root: ~/Projects/mozilla
-    nested: true
 
-  # Category with scan patterns
   - name: uralys
     root: ~/Projects/uralys
-    scan:
-      - web/*        # All projects in web/ directory
-      - gamedev/*    # All projects in gamedev/ directory
 
-  # Studio projects
-  - name: studio
-    root: ~/Music
-    projects:
-      - Ableton/User Library
-
-  # Another example with explicit projects
-  - name: mobile
-    root: ~/Projects/mobile
-    # Will scan all directories in this folder
-
-# Projects to ignore (glob patterns supported)
+# Projects to ignore (name matching)
 ignored:
   - my-deprecated-project
-  - "**/.DS_Store"
-  - "**/node_modules"
+  - another-unfollowed-project
 
 # Display options
 display:

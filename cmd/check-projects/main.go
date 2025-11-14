@@ -122,7 +122,9 @@ func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []
 				fmt.Printf("Ignore this project? (y/n): ")
 
 				var response string
-				fmt.Scanln(&response)
+				if _, err := fmt.Scanln(&response); err != nil {
+					continue
+				}
 
 				if response == "y" || response == "Y" {
 					// Check if config is filtered (--category used)
