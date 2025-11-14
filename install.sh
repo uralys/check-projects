@@ -59,11 +59,14 @@ get_latest_release() {
     print_error "Failed to get latest release"
   fi
 
+  # Remove 'v' prefix for archive filename
+  VERSION=${LATEST_RELEASE#v}
+
   print_success "Latest version: $LATEST_RELEASE"
 }
 
 download_binary() {
-  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_RELEASE}/${BINARY_NAME}_${LATEST_RELEASE}_${OS}_${ARCH}.tar.gz"
+  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_RELEASE}/${BINARY_NAME}_${VERSION}_${OS}_${ARCH}.tar.gz"
   TMP_DIR=$(mktemp -d)
   TMP_FILE="${TMP_DIR}/${BINARY_NAME}.tar.gz"
 
