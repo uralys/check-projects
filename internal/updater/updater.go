@@ -72,7 +72,7 @@ func getLatestVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("github API returned status %d", resp.StatusCode)
@@ -97,7 +97,7 @@ func promptAndInstall() error {
 
 	// Read single character or line
 	var response string
-	fmt.Scanln(&response)
+	_, _ = fmt.Scanln(&response)
 
 	response = strings.ToLower(strings.TrimSpace(response))
 
@@ -125,7 +125,7 @@ func installUpdate() error {
 	if err != nil {
 		return fmt.Errorf("failed to download installer: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to download installer: HTTP %d", resp.StatusCode)
@@ -136,13 +136,15 @@ func installUpdate() error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	// Write script to temp file
 	if _, err := io.Copy(tmpFile, resp.Body); err != nil {
 		return fmt.Errorf("failed to write installer: %w", err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
 
 	// Make executable
 	if err := os.Chmod(tmpFile.Name(), 0755); err != nil {

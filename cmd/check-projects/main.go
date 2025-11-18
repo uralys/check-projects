@@ -44,7 +44,7 @@ func main() {
 
 func run(cmd *cobra.Command, args []string) error {
 	// Check for updates (non-blocking)
-	updater.CheckForUpdates(Version)
+	_ = updater.CheckForUpdates(Version)
 
 	// Load configuration
 	cfg, err := config.LoadConfig(configPath)
