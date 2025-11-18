@@ -3,6 +3,7 @@ package scanner
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/uralys/check-projects/internal/config"
 	"github.com/uralys/check-projects/internal/git"
@@ -55,8 +56,8 @@ func (s *Scanner) scanCategory(category config.Category) ([]Project, error) {
 			// Extract project name from path
 			projectName := filepath.Base(expandedPath)
 
-			// Check if ignored
-			if s.isIgnored(projectName, s.config.Ignored) {
+			// Check if ignored in this category
+			if s.isIgnored(projectName, category.Ignore) {
 				continue
 			}
 
@@ -73,7 +74,7 @@ func (s *Scanner) scanCategory(category config.Category) ([]Project, error) {
 	// Mode 2: Auto-scan root directory recursively
 	if category.Root != "" {
 		rootPath := config.ExpandPath(category.Root)
-		projects = s.scanRecursive(rootPath, category.Name, s.config.Ignored)
+		projects = s.scanRecursive(rootPath, category.Name, category.Ignore)
 		return projects, nil
 	}
 
@@ -133,10 +134,12 @@ func (s *Scanner) scanRecursiveHelper(basePath, currentPath, categoryName string
 	}
 }
 
-// shouldIgnore checks if a directory name should be ignored (hardcoded patterns)
+// shouldIgnore checks if a directory name should be ignored
+// These are common patterns that should always be skipped during scanning
 func (s *Scanner) shouldIgnore(name string) bool {
-	ignoredNames := []string{".DS_Store", "node_modules", "_archives", "_assets", "_tools"}
-	for _, ignored := range ignoredNames {
+	// Common directories that should never be scanned for git repos
+	commonIgnored := []string{"node_modules", ".DS_Store"}
+	for _, ignored := range commonIgnored {
 		if name == ignored {
 			return true
 		}
@@ -147,9 +150,30 @@ func (s *Scanner) shouldIgnore(name string) bool {
 // isIgnored checks if a project path matches any ignored pattern from config
 func (s *Scanner) isIgnored(projectPath string, ignored []string) bool {
 	for _, pattern := range ignored {
-		// Simple pattern matching: exact match or suffix match
+		// Exact match
 		if projectPath == pattern || filepath.Base(projectPath) == pattern {
 			return true
+		}
+
+		// Prefix match with wildcard (e.g., "_archives/*" matches "_archives/anything")
+		if strings.HasSuffix(pattern, "/*") {
+			prefix := strings.TrimSuffix(pattern, "/*")
+			if strings.HasPrefix(projectPath, prefix+"/") || projectPath == prefix {
+				return true
+			}
+		}
+
+		// Wildcard match (e.g., "*-deprecated" matches "foo-deprecated")
+		if strings.Contains(pattern, "*") {
+			matched, err := filepath.Match(pattern, projectPath)
+			if err == nil && matched {
+				return true
+			}
+			// Also try matching against basename
+			matched, err = filepath.Match(pattern, filepath.Base(projectPath))
+			if err == nil && matched {
+				return true
+			}
 		}
 	}
 	return false

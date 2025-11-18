@@ -121,9 +121,32 @@ categories:
   - name: godot
     root: ~/Projects/godot
 
+  # Mode 2 with ignore patterns
+  # Projects listed in 'ignore' will be skipped in this category
   - name: uralys
     root: ~/Projects/uralys
+    ignore:
+      - deprecated-project        # Exact match
+      - _archives/*              # Wildcard: ignore all projects in _archives/
+      - "*-old"                  # Pattern: ignore all projects ending with -old
+
+# Display options
+display:
+  hide_clean: true      # Hide projects with ✔ status by default
+  hide_ignored: true    # Hide ignored projects from output
 ```
+
+### Ignore Patterns
+
+You can ignore specific projects in a category using the `ignore` field. Supported patterns:
+
+- **Exact match**: `project-name` - ignores the exact project name
+- **Wildcard prefix**: `_archives/*` - ignores all projects in the `_archives/` directory
+- **Glob patterns**: `*-deprecated` - ignores all projects ending with `-deprecated`
+
+Common ignore patterns are automatically applied:
+- `node_modules` - always skipped during scanning
+- `.DS_Store` - always skipped during scanning
 
 ## Usage
 
@@ -140,7 +163,24 @@ check-projects --category gamedev
 
 # Use custom config file
 check-projects --config /path/to/config.yml
+
+# Show version
+check-projects --version
 ```
+
+## Updates
+
+`check-projects` automatically checks for new versions on startup. When a new version is available, you'll see:
+
+```
+⚠ New version available: 1.0.0 → 1.1.0
+Install update? [Y/n]:
+```
+
+- Press **Enter** or type **Y** to automatically download and install the update
+- Type **n** to skip and continue with your current version
+
+The update check is non-blocking and will silently fail if GitHub is unreachable.
 
 ## Development
 

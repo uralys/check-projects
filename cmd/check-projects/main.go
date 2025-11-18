@@ -10,12 +10,17 @@ import (
 	"github.com/uralys/check-projects/internal/git"
 	"github.com/uralys/check-projects/internal/reporter"
 	"github.com/uralys/check-projects/internal/scanner"
+	"github.com/uralys/check-projects/internal/updater"
 )
 
 var (
 	configPath string
 	verbose    bool
 	category   string
+
+	// Version information (set by ldflags during build)
+	Version   = "dev"
+	BuildTime = "unknown"
 )
 
 func main() {
@@ -29,6 +34,7 @@ func main() {
 	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Config file path (default: ./check-projects.yml or ~/check-projects.yml)")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show all projects including clean ones")
 	rootCmd.Flags().StringVar(&category, "category", "", "Only check projects in this category")
+	rootCmd.Version = fmt.Sprintf("%s (built: %s)", Version, BuildTime)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -37,6 +43,9 @@ func main() {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	// Check for updates (non-blocking)
+	updater.CheckForUpdates(Version)
+
 	// Load configuration
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
@@ -134,9 +143,17 @@ func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []
 						continue
 					}
 
-					// Add to ignored list
+					// Add to ignored list of the project's category
 					projectName := result.Name
-					cfg.Ignored = append(cfg.Ignored, projectName)
+					categoryName := result.Category
+
+					// Find the category and add to its ignore list
+					for j := range cfg.Categories {
+						if cfg.Categories[j].Name == categoryName {
+							cfg.Categories[j].Ignore = append(cfg.Categories[j].Ignore, projectName)
+							break
+						}
+					}
 
 					// Save config
 					if err := config.SaveConfig(cfg); err != nil {
@@ -144,7 +161,7 @@ func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []
 						continue
 					}
 
-					fmt.Printf("✅ Project '%s' added to ignored list in %s\n", projectName, cfg.ConfigPath)
+					fmt.Printf("✅ Project '%s' added to ignore list in category '%s' in %s\n", projectName, categoryName, cfg.ConfigPath)
 					results[i].Status.Type = git.StatusIgnored
 				} else {
 					fmt.Printf("Skipped.\n")

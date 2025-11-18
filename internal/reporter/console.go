@@ -54,7 +54,7 @@ func (r *Reporter) Report(results []ProjectResult) {
 		}
 	}
 
-	if allClean {
+	if allClean && !r.verbose {
 		fmt.Println(greenBold("✔ All projects are clean!"))
 		return
 	}

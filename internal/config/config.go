@@ -9,7 +9,6 @@ import (
 // Config represents the application configuration
 type Config struct {
 	Categories []Category `yaml:"categories"`
-	Ignored    []string   `yaml:"ignored"`
 	Display    Display    `yaml:"display"`
 
 	// Internal: path where config was loaded from (not serialized)
@@ -24,6 +23,7 @@ type Category struct {
 	Name     string   `yaml:"name"`
 	Root     string   `yaml:"root,omitempty"`     // Auto-scan: recursively find all git repos
 	Projects []string `yaml:"projects,omitempty"` // Explicit: list of full paths to repos
+	Ignore   []string `yaml:"ignore,omitempty"`   // Projects to ignore in this category
 }
 
 // Display represents display options
@@ -53,7 +53,6 @@ func (c *Category) GetRootPath() string {
 func DefaultConfig() *Config {
 	return &Config{
 		Categories: []Category{},
-		Ignored:    []string{"**/.DS_Store", "**/node_modules"},
 		Display: Display{
 			HideClean:   true,
 			HideIgnored: true,

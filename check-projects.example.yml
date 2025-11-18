@@ -25,13 +25,13 @@ categories:
   - name: mozilla
     root: ~/Projects/mozilla
 
+  # Mode 2 with ignore patterns
+  # Projects listed in 'ignore' will be skipped in this category
   - name: uralys
     root: ~/Projects/uralys
-
-# Projects to ignore (name matching)
-ignored:
-  - my-deprecated-project
-  - another-unfollowed-project
+    ignore:
+      - my-deprecated-project
+      - another-unfollowed-project
 
 # Display options
 display:
