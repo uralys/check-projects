@@ -31,6 +31,30 @@ type GitHubRelease struct {
 	HTMLURL string `json:"html_url"`
 }
 
+// GetUpdateStatus returns a status message about updates (for help display)
+func GetUpdateStatus(currentVersion string) string {
+	// Skip check if version is "dev" or empty
+	if currentVersion == "" || currentVersion == "dev" || strings.Contains(currentVersion, "dirty") {
+		return ""
+	}
+
+	latestVersion, err := getLatestVersion()
+	if err != nil {
+		// Silently fail - don't block the user
+		return ""
+	}
+
+	// Normalize versions (remove 'v' prefix if present)
+	current := strings.TrimPrefix(currentVersion, "v")
+	latest := strings.TrimPrefix(latestVersion, "v")
+
+	if current != latest {
+		return fmt.Sprintf("Status: %s (latest: %s)", yellow("Update available"), green(latest))
+	}
+
+	return fmt.Sprintf("Status: %s", green("Up to date"))
+}
+
 // CheckForUpdates checks if a new version is available
 func CheckForUpdates(currentVersion string) error {
 	// Skip check if version is "dev" or empty

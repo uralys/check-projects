@@ -27,7 +27,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "check-projects",
 		Short: "Check git status of multiple projects",
-		Long:  `A tool to quickly check the git status of all your projects organized by categories.`,
+		Long:  buildLongDescription(),
 		RunE:  run,
 	}
 
@@ -40,6 +40,21 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func buildLongDescription() string {
+	description := "A tool to quickly check the git status of all your projects organized by categories."
+
+	// Add version info
+	description += fmt.Sprintf("\n\nVersion: %s (built: %s)", Version, BuildTime)
+
+	// Check for updates
+	updateStatus := updater.GetUpdateStatus(Version)
+	if updateStatus != "" {
+		description += "\n" + updateStatus
+	}
+
+	return description
 }
 
 func run(cmd *cobra.Command, args []string) error {
