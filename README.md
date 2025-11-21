@@ -88,6 +88,8 @@ check-projects --fetch            # Same as -f
 check-projects --tui
 ```
 
+![TUI Interface](docs/images/tui-screenshot.png)
+
 **Navigate** with `↑↓` • **Switch categories** with `←→` • **Git status shown automatically on right**
 
 [Full TUI guide →](docs/tui-mode.md)

@@ -2,6 +2,8 @@
 
 The Terminal User Interface (TUI) provides an interactive way to navigate and manage your projects.
 
+![TUI Interface](images/tui-screenshot.png)
+
 ## Launch
 
 ```bash
