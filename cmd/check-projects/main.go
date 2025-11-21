@@ -10,6 +10,7 @@ import (
 	"github.com/uralys/check-projects/internal/git"
 	"github.com/uralys/check-projects/internal/reporter"
 	"github.com/uralys/check-projects/internal/scanner"
+	"github.com/uralys/check-projects/internal/tui"
 	"github.com/uralys/check-projects/internal/updater"
 )
 
@@ -17,6 +18,8 @@ var (
 	configPath string
 	verbose    bool
 	category   string
+	useTUI     bool
+	fetchFlag  bool
 
 	// Version information (set by ldflags during build)
 	Version   = "dev"
@@ -34,6 +37,8 @@ func main() {
 	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Config file path (default: ./check-projects.yml or ~/check-projects.yml)")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show all projects including clean ones")
 	rootCmd.Flags().StringVar(&category, "category", "", "Only check projects in this category")
+	rootCmd.Flags().BoolVar(&useTUI, "tui", false, "Use interactive TUI mode")
+	rootCmd.Flags().BoolVarP(&fetchFlag, "fetch", "f", false, "Fetch from remote before checking status")
 	rootCmd.Version = fmt.Sprintf("%s (built: %s)", Version, BuildTime)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -82,12 +87,31 @@ func run(cmd *cobra.Command, args []string) error {
 		cfg.IsFiltered = true // Mark as filtered to prevent saving
 	}
 
+	// Determine if we should use TUI mode
+	// Command line flag overrides config
+	shouldUseTUI := useTUI || cfg.UseTUIByDefault
+
+	// Determine if we should fetch
+	// Command line flag overrides config
+	shouldFetch := fetchFlag || cfg.Fetch
+
+	// Use TUI mode if enabled
+	if shouldUseTUI {
+		return tui.Run(cfg, Version)
+	}
+
 	// Scan for projects
 	fmt.Println("Processing projects...")
 	s := scanner.NewScanner(cfg)
 	projects, err := s.ScanAll()
 	if err != nil {
 		return fmt.Errorf("failed to scan projects: %w", err)
+	}
+
+	// Fetch from remote if enabled
+	if shouldFetch {
+		fmt.Println("Fetching from remote repositories...")
+		fetchProjects(projects)
 	}
 
 	// Check git status for each project concurrently
@@ -132,6 +156,25 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func fetchProjects(projects []scanner.Project) {
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10) // Limit concurrency to 10
+
+	for _, project := range projects {
+		wg.Add(1)
+		go func(proj scanner.Project) {
+			defer wg.Done()
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
+
+			// Silently fetch - ignore errors
+			_ = proj.Repository.Fetch()
+		}(project)
+	}
+
+	wg.Wait()
 }
 
 func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []reporter.ProjectResult) error {

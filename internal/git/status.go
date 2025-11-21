@@ -25,6 +25,21 @@ type Status struct {
 	Symbol  string
 }
 
+// Fetch runs git fetch to update remote tracking branches
+func (r *Repository) Fetch() error {
+	cmd := exec.Command("git", "fetch")
+	cmd.Dir = r.Path
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("fetch failed: %s", stderr.String())
+	}
+
+	return nil
+}
+
 // GetStatus retrieves the git status of a repository
 func (r *Repository) GetStatus() (*Status, error) {
 	// First check if upstream is configured
@@ -96,6 +111,14 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:    StatusUnsync,
 			Message: "Ahead of remote",
 			Symbol:  "⬆",
+		}, nil
+	}
+
+	if strings.Contains(output, "is behind") {
+		return &Status{
+			Type:    StatusUnsync,
+			Message: "Behind remote",
+			Symbol:  "↓",
 		}, nil
 	}
 
