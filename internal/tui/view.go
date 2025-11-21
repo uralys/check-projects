@@ -87,11 +87,8 @@ func (m Model) View() string {
 		return "No projects found.\n" + renderHelpBar(m)
 	}
 
-	// Get filtered projects
-	filtered := m.getFilteredProjects()
-
-	// If hiding clean and no projects with changes, show "all clean" view
-	if m.hideClean && len(filtered) == 0 {
+	// If hiding clean and no projects with changes across ALL categories, show "all clean" view
+	if m.hideClean && !m.hasAnyChanges() {
 		return renderNormalView(m)
 	}
 
@@ -283,24 +280,36 @@ func renderProjectsList(m Model, width, height int) string {
 
 		statusSymbol := "?"
 		statusStyle := lipgloss.NewStyle()
+		var renderedStatus string
+
 		if p.Status != nil {
 			statusSymbol = p.Status.Symbol
 			switch p.Status.Type {
 			case "sync":
 				statusStyle = statusCleanStyle
+				renderedStatus = statusStyle.Render(statusSymbol)
 			case "unsync":
 				// Special case: if symbol is ⬆ (ahead of remote), use green
 				if statusSymbol == "⬆" {
 					statusStyle = statusCleanStyle
+					renderedStatus = statusStyle.Render(statusSymbol)
+				} else if strings.HasPrefix(statusSymbol, "✱ ") {
+					// Staged changes: ✱ (red) + letter (green)
+					letter := strings.TrimPrefix(statusSymbol, "✱ ")
+					renderedStatus = statusErrorStyle.Render("✱") + " " + statusCleanStyle.Render(letter)
 				} else {
 					statusStyle = statusUnsyncStyle
+					renderedStatus = statusStyle.Render(statusSymbol)
 				}
 			case "error":
 				statusStyle = statusErrorStyle
+				renderedStatus = statusStyle.Render(statusSymbol)
 			}
+		} else {
+			renderedStatus = statusSymbol
 		}
 
-		line := fmt.Sprintf("%s%s %s", prefix, statusStyle.Render(statusSymbol), style.Render(p.Project.Name))
+		line := fmt.Sprintf("%s%s %s", prefix, renderedStatus, style.Render(p.Project.Name))
 		lines = append(lines, line)
 	}
 
@@ -795,8 +804,13 @@ func colorizeGitStatus(gitOutput string) string {
 		statusCodes := line[0:2]
 
 		// Color based on git status codes
-		// Green for staged/added
-		if indexStatus == "A" || indexStatus == "M" || indexStatus == "D" {
+		// Special handling for renamed files: ✱ (red) R (green)
+		if indexStatus == "R" {
+			star := lipgloss.NewStyle().Foreground(colorStatusError).Render("✱")   // Red
+			letter := lipgloss.NewStyle().Foreground(colorStatusClean).Render("R") // Green
+			coloredLine = star + " " + letter + " " + fileName
+		} else if indexStatus == "A" || indexStatus == "M" || indexStatus == "D" {
+			// Green for staged/added
 			statusPart := lipgloss.NewStyle().Foreground(colorStatusClean).Render(statusCodes) // Green
 			coloredLine = statusPart + " " + fileName
 		} else if indexStatus == "?" && workTreeStatus == "?" {

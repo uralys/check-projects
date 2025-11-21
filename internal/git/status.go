@@ -82,6 +82,31 @@ func (r *Repository) GetStatus() (*Status, error) {
 	output := stdout.String()
 
 	// Check for various git states
+	// Check for staged changes first (Changes to be committed)
+	if strings.Contains(output, "Changes to be committed:") {
+		// Determine the type of staged change
+		if strings.Contains(output, "renamed:") {
+			return &Status{
+				Type:    StatusUnsync,
+				Message: "Staged renames",
+				Symbol:  "✱ R",
+			}, nil
+		}
+		if strings.Contains(output, "new file:") {
+			return &Status{
+				Type:    StatusUnsync,
+				Message: "Staged files",
+				Symbol:  "✱ +",
+			}, nil
+		}
+		// Generic staged changes
+		return &Status{
+			Type:    StatusUnsync,
+			Message: "Staged changes",
+			Symbol:  "✱",
+		}, nil
+	}
+
 	if strings.Contains(output, "modified:") {
 		return &Status{
 			Type:    StatusUnsync,

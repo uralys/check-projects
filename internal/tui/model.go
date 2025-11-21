@@ -120,3 +120,13 @@ func (m Model) getVisibleCategories() []string {
 	}
 	return visible
 }
+
+// hasAnyChanges checks if there are any projects with changes across all categories
+func (m Model) hasAnyChanges() bool {
+	for _, p := range m.projects {
+		if p.Status != nil && p.Status.Type != git.StatusSync {
+			return true
+		}
+	}
+	return false
+}
