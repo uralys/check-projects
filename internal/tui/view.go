@@ -279,31 +279,26 @@ func renderProjectsList(m Model, width, height int) string {
 		}
 
 		statusSymbol := "?"
-		statusStyle := lipgloss.NewStyle()
 		var renderedStatus string
 
 		if p.Status != nil {
 			statusSymbol = p.Status.Symbol
 			switch p.Status.Type {
 			case "sync":
-				statusStyle = statusCleanStyle
-				renderedStatus = statusStyle.Render(statusSymbol)
+				renderedStatus = statusCleanStyle.Render(statusSymbol)
 			case "unsync":
 				// Special case: if symbol is ⬆ (ahead of remote), use green
 				if statusSymbol == "⬆" {
-					statusStyle = statusCleanStyle
-					renderedStatus = statusStyle.Render(statusSymbol)
+					renderedStatus = statusCleanStyle.Render(statusSymbol)
 				} else if strings.HasPrefix(statusSymbol, "✱ ") {
 					// Staged changes: ✱ (red) + letter (green)
 					letter := strings.TrimPrefix(statusSymbol, "✱ ")
 					renderedStatus = statusErrorStyle.Render("✱") + " " + statusCleanStyle.Render(letter)
 				} else {
-					statusStyle = statusUnsyncStyle
-					renderedStatus = statusStyle.Render(statusSymbol)
+					renderedStatus = statusUnsyncStyle.Render(statusSymbol)
 				}
 			case "error":
-				statusStyle = statusErrorStyle
-				renderedStatus = statusStyle.Render(statusSymbol)
+				renderedStatus = statusErrorStyle.Render(statusSymbol)
 			}
 		} else {
 			renderedStatus = statusSymbol
