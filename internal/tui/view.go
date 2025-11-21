@@ -25,18 +25,10 @@ var (
 	colorBorder      = lipgloss.Color("241") // Gray for borders
 	colorScrollbar   = lipgloss.Color("240") // Gray for scrollbars
 	colorScrollThumb = lipgloss.Color("12")  // Blue for scroll thumb
-	colorArrow       = lipgloss.Color("10")  // Green for navigation arrows
-
-	// Background colors
-	colorBackground = lipgloss.Color("237") // Dark gray for backgrounds
+	colorArrow = lipgloss.Color("10") // Green for navigation arrows
 )
 
 var (
-	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(colorTitle).
-			MarginBottom(1)
-
 	categoryStyle = lipgloss.NewStyle().
 			Foreground(colorCategory).
 			PaddingLeft(2)
@@ -617,69 +609,6 @@ func renderCategoryHorizontalScrollbar(m Model, width int) string {
 	return scrollbar.String()
 }
 
-func renderCategoryTabsNoBorder(m Model) string {
-	tabsLine := renderCategoryTabsOnly(m)
-	scrollbarLine := renderCategoryHorizontalScrollbar(m, lipgloss.Width(tabsLine))
-
-	// Combine tabs and scrollbar vertically
-	var tabsContent string
-	if scrollbarLine != "" {
-		tabsContent = tabsLine + "\n" + scrollbarLine
-	} else {
-		tabsContent = tabsLine
-	}
-
-	return tabsContent
-}
-
-func renderCategoryTabs(m Model) string {
-	content := renderCategoryTabsNoBorder(m)
-
-	borderStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(colorBorder).
-		Padding(0, 1)
-
-	return borderStyle.Render(content)
-}
-
-func renderProjectList(m Model, projects []ProjectWithStatus) string {
-	var b strings.Builder
-
-	for i, p := range projects {
-		style := projectStyle
-		if i == m.selectedProject {
-			style = selectedProjectStyle
-		}
-
-		// Render status symbol
-		statusSymbol := "?"
-		statusStyle := lipgloss.NewStyle()
-		if p.Status != nil {
-			statusSymbol = p.Status.Symbol
-			switch p.Status.Type {
-			case "sync":
-				statusStyle = statusCleanStyle
-			case "unsync":
-				// Special case: if symbol is ⬆ (ahead of remote), use green
-				if statusSymbol == "⬆" {
-					statusStyle = statusCleanStyle
-				} else {
-					statusStyle = statusUnsyncStyle
-				}
-			case "error":
-				statusStyle = statusErrorStyle
-			}
-		}
-
-		line := fmt.Sprintf("%s %s", statusStyle.Render(statusSymbol), p.Project.Name)
-		b.WriteString(style.Render(line))
-		b.WriteString("\n")
-	}
-
-	return b.String()
-}
-
 func renderFooter(m Model) string {
 	var footer strings.Builder
 
@@ -769,7 +698,7 @@ func getRemoteStatus(projectPath string) RemoteStatus {
 	cmd.Dir = projectPath
 	output, err = cmd.CombinedOutput()
 	if err == nil {
-		fmt.Sscanf(string(output), "%d", &status.AheadCount)
+		_, _ = fmt.Sscanf(string(output), "%d", &status.AheadCount)
 	}
 
 	// Commits behind: remote commits not in local
@@ -777,7 +706,7 @@ func getRemoteStatus(projectPath string) RemoteStatus {
 	cmd.Dir = projectPath
 	output, err = cmd.CombinedOutput()
 	if err == nil {
-		fmt.Sscanf(string(output), "%d", &status.BehindCount)
+		_, _ = fmt.Sscanf(string(output), "%d", &status.BehindCount)
 	}
 
 	// Determine overall status
