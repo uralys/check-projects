@@ -8,8 +8,10 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Categories []Category `yaml:"categories"`
-	Display    Display    `yaml:"display"`
+	Categories       []Category `yaml:"categories"`
+	Display          Display    `yaml:"display"`
+	UseTUIByDefault  bool       `yaml:"use_tui_by_default"`
+	Fetch            bool       `yaml:"fetch"`
 
 	// Internal: path where config was loaded from (not serialized)
 	ConfigPath string `yaml:"-"`
@@ -57,5 +59,7 @@ func DefaultConfig() *Config {
 			HideClean:   true,
 			HideIgnored: true,
 		},
+		UseTUIByDefault: false,
+		Fetch:           false,
 	}
 }

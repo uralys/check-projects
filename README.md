@@ -2,10 +2,6 @@
 
 A fast, cross-platform CLI tool to check the git status of multiple projects organized by categories.
 
-Run `check-projects` to see which of your projects have uncommitted changes, are ahead of remote, or have other git status indicators.
-
-## Output Example
-
 ```sh
 x mozilla
   * M firefox
@@ -18,185 +14,109 @@ x gamedev
   * M avindi
 ```
 
-## Git Status Symbols
-
-- `✔` - Clean (synced with remote)
-- `⬆` - Ahead of remote
-- `⬆⬆` - Diverged from remote
-- `* M` - Modified files
-- `* D` - Deleted files
-- `✱ ✚` - Untracked files
-- `❌` - Error
-
 ## Features
 
-- **Multi-category organization**: Group your projects by team, client, or any category
-- **Nested project discovery**: Automatically scan nested folder structures
-- **Concurrent scanning**: Fast parallel git status checks
-- **Flexible configuration**: YAML-based config with local and global support
-- **Smart filtering**: Hide clean projects by default, show only what needs attention
-- **Cross-platform**: Single binary for macOS, Linux, and Windows
+- **Interactive TUI mode** - Navigate projects with a modern terminal UI
+- **Multi-category organization** - Group projects by team, client, or category
+- **Auto-discovery** - Automatically scan directories for git repositories
+- **Fast concurrent checks** - Parallel git status checks
+- **Smart filtering** - Hide clean projects, search by name
+- **Cross-platform** - Single binary for macOS, Linux, and Windows
 
-## Installation
+## Quick Start
 
-### Quick Install (macOS/Linux)
+### Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/uralys/check-projects/main/install.sh | sh
 ```
 
-This will download the latest release and install it to `~/.local/bin/check-projects`.
+[Other installation methods →](docs/installation.md)
 
-<details>
-<summary><b>show manual Installation</b></summary>
+### Configure
 
-1. Download the latest release for your platform from [GitHub Releases](https://github.com/uralys/check-projects/releases)
-
-2. Extract and install:
-
-```bash
-# macOS/Linux
-tar -xzf check-projects-*.tar.gz
-chmod +x check-projects
-sudo mv check-projects /usr/local/bin/
-
-# Or install to user directory (no sudo required)
-mkdir -p ~/.local/bin
-mv check-projects ~/.local/bin/
-# Add ~/.local/bin to your PATH if not already done
-```
-
-```powershell
-# Windows (PowerShell as Administrator)
-Move-Item check-projects.exe C:\Windows\System32\
-```
-
-### From Source
-
-```bash
-git clone https://github.com/uralys/check-projects.git
-cd check-projects
-make install
-```
-
-</details>
-
-## Quick Start
-
-1. Create a configuration file:
-
-```bash
-cp check-projects.example.yml ~/check-projects.yml
-```
-
-2. Edit `~/check-projects.yml` to match your project structure
-
-3. Run the tool:
-
-```bash
-check-projects
-```
-
-## Configuration
-
-Configuration files are searched in this order:
-
-1. Path specified with `--config` flag
-2. `./check-projects.yml` (current directory)
-3. `~/check-projects.yml` (home directory)
-
-### Example Configuration
+Create `~/check-projects.yml`:
 
 ```yaml
 categories:
-  # Mode 1: Explicit project list (using 'projects' field)
-  # Use full paths to specific git repositories
-  - name: core
-    projects:
-      - ~/fox
-      - ~/cherry
+  - name: personal
+    root: ~/Projects/personal
 
-  # Mode 2: Auto-scan directory (using 'root' field)
-  # Recursively scans for all git repositories in the directory
-  - name: godot
-    root: ~/Projects/godot
-
-  # Mode 2 with ignore patterns
-  # Projects listed in 'ignore' will be skipped in this category
-  - name: uralys
-    root: ~/Projects/uralys
+  - name: work
+    root: ~/Projects/work
     ignore:
-      - deprecated-project        # Exact match
-      - _archives/*              # Wildcard: ignore all projects in _archives/
-      - "*-old"                  # Pattern: ignore all projects ending with -old
+      - "*-deprecated"
 
-# Display options
 display:
-  hide_clean: true      # Hide projects with ✔ status by default
-  hide_ignored: true    # Hide ignored projects from output
+  hide_clean: true
+
+# Optional: set defaults
+use_tui_by_default: false  # Set to true to always use TUI mode
+fetch: true                # Set to true to always fetch from remote
 ```
 
-### Ignore Patterns
+[Full configuration guide →](docs/configuration.md)
 
-You can ignore specific projects in a category using the `ignore` field. Supported patterns:
+### Run
 
-- **Exact match**: `project-name` - ignores the exact project name
-- **Wildcard prefix**: `_archives/*` - ignores all projects in the `_archives/` directory
-- **Glob patterns**: `*-deprecated` - ignores all projects ending with `-deprecated`
+```bash
+# CLI mode (simple output)
+check-projects
 
-Common ignore patterns are automatically applied:
-- `node_modules` - always skipped during scanning
-- `.DS_Store` - always skipped during scanning
+# TUI mode (interactive)
+check-projects --tui
+
+# Fetch from remote before checking
+check-projects --fetch
+```
 
 ## Usage
 
+### CLI Mode
+
 ```bash
-# Check all projects
-check-projects
-
-# Show all projects including clean ones
-check-projects --verbose
-check-projects -v
-
-# Check only specific category
-check-projects --category gamedev
-
-# Use custom config file
-check-projects --config /path/to/config.yml
-
-# Show version
-check-projects --version
+check-projects                    # Check all projects
+check-projects -v                 # Show all (including clean)
+check-projects --category work    # Check specific category
+check-projects -f                 # Fetch from remote first
+check-projects --fetch            # Same as -f
 ```
 
-## Updates
+### TUI Mode
 
-`check-projects` automatically checks for new versions on startup. When a new version is available, you'll see:
-
-```
-⚠ New version available: 1.0.0 → 1.1.0
-Install update? [Y/n]:
+```bash
+check-projects --tui
 ```
 
-- Press **Enter** or type **Y** to automatically download and install the update
-- Type **n** to skip and continue with your current version
+**Navigate** with `↑↓` • **Switch categories** with `←→` • **Git status shown automatically on right**
 
-The update check is non-blocking and will silently fail if GitHub is unreachable.
+[Full TUI guide →](docs/tui-mode.md)
+
+## Status Symbols
+
+- `✔` Clean (synced with remote)
+- `⬆` Ahead of remote
+- `⬆⬆` Diverged from remote
+- `* M` Modified files
+- `* D` Deleted files
+- `✱ ✚` Untracked files
+- `❌` Error
+
+## Documentation
+
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [TUI Mode](docs/tui-mode.md)
 
 ## Development
 
 ```bash
-# Install dependencies
-make deps
-
-# Run without building
-make dev
-
-# Build binary
-make build
-
-# Run tests
-make test
-
-# Build for all platforms
-make release
+make deps      # Install dependencies
+make build     # Build binary
+make test      # Run tests
+make lint      # Run linter
 ```
+
+## License
+
+MIT

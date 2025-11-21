@@ -37,3 +37,7 @@ categories:
 display:
   hide_clean: true      # Hide projects with ✔ status by default
   hide_ignored: true    # Hide ignored projects from output
+
+# Default behavior options
+use_tui_by_default: false  # Set to true to always launch in TUI mode (same as --tui flag)
+fetch: true                # Set to true to always fetch from remote before checking status (same as --fetch/-f flag)
