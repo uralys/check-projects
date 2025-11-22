@@ -11,9 +11,9 @@ import (
 // Theme colors - centralized color definitions
 var (
 	// Status colors
-	colorStatusClean  = lipgloss.Color("2")  // Green for clean/success
-	colorStatusError  = lipgloss.Color("1")  // Dark red for errors/modifications
-	colorStatusUnsync = lipgloss.Color("1")  // Dark red for unsync
+	colorStatusClean  = lipgloss.Color("2") // Green for clean/success
+	colorStatusError  = lipgloss.Color("1") // Dark red for errors/modifications
+	colorStatusUnsync = lipgloss.Color("1") // Dark red for unsync
 
 	// UI colors
 	colorTitle       = lipgloss.Color("86")  // Cyan for titles
@@ -25,7 +25,6 @@ var (
 	colorBorder      = lipgloss.Color("241") // Gray for borders
 	colorScrollbar   = lipgloss.Color("240") // Gray for scrollbars
 	colorScrollThumb = lipgloss.Color("12")  // Blue for scroll thumb
-	colorArrow = lipgloss.Color("10") // Green for navigation arrows
 )
 
 var (
@@ -619,7 +618,7 @@ func renderFooter(m Model) string {
 			Bold(true).
 			Foreground(colorTitle)
 		versionStyle := lipgloss.NewStyle().Foreground(colorVersion) // Yellow
-		linkStyle := lipgloss.NewStyle().Foreground(colorLink)     // Purple
+		linkStyle := lipgloss.NewStyle().Foreground(colorLink)       // Purple
 
 		titleLine := titleStyle.Render("check-projects") + " | " + versionStyle.Render(m.version) + " | " + linkStyle.Render("https://github.com/uralys/check-projects")
 		footer.WriteString(titleLine)
