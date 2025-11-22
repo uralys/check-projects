@@ -109,6 +109,7 @@ check-projects --tui
 - [Installation](docs/installation.md)
 - [Configuration](docs/configuration.md)
 - [TUI Mode](docs/tui-mode.md)
+- [Changelogs](changelogs/index.md)
 
 ## Development
 

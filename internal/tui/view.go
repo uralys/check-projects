@@ -490,6 +490,18 @@ func renderCategoryTabsOnly(m Model) string {
 	// Get visible categories (filtered by hideClean)
 	visibleCategories := m.getVisibleCategories()
 
+	// Find current position in visible categories
+	currentIndex := -1
+	if m.selectedCategory < len(m.categories) {
+		currentCategory := m.categories[m.selectedCategory]
+		for i, category := range visibleCategories {
+			if category == currentCategory {
+				currentIndex = i
+				break
+			}
+		}
+	}
+
 	// Build all category tabs
 	var allTabs []string
 	for i, cat := range visibleCategories {
@@ -506,13 +518,13 @@ func renderCategoryTabsOnly(m Model) string {
 
 		// Apply style
 		style := categoryStyle
-		if i == m.selectedCategory {
+		if i == currentIndex {
 			style = selectedCategoryStyle
 		}
 
 		// Build the tab with symbol inside brackets for selected, outside for others
 		var tab string
-		if i == m.selectedCategory {
+		if i == currentIndex {
 			// Selected: [*core] or [✔core]
 			if hasChanges {
 				tab = "[" + statusErrorStyle.Render(symbol) + style.Render(cat) + "]"
@@ -532,35 +544,20 @@ func renderCategoryTabsOnly(m Model) string {
 	}
 
 	// Add scroll indicators if selected category is not at edges
-	// Check if we can navigate left/right to visible categories
-	visibleCategories = m.getVisibleCategories()
-
 	leftArrow := ""
 	rightArrow := ""
-	arrowStyleGreen := lipgloss.NewStyle().Foreground(colorArrow) // Green
+	arrowStyle := lipgloss.NewStyle().Foreground(colorCategory) // Blue
 
-	// Find current position in visible categories
-	currentIndex := -1
-	if m.selectedCategory < len(m.categories) {
-		currentCategory := m.categories[m.selectedCategory]
-		for i, category := range visibleCategories {
-			if category == currentCategory {
-				currentIndex = i
-				break
-			}
-		}
-	}
-
-	// Left arrow: green if we can go left in visible categories
+	// Left arrow: blue if we can go left in visible categories
 	if currentIndex > 0 {
-		leftArrow = arrowStyleGreen.Render("◀ ")
+		leftArrow = arrowStyle.Render("◀ ")
 	} else {
 		leftArrow = "  "
 	}
 
-	// Right arrow: green if we can go right in visible categories
+	// Right arrow: blue if we can go right in visible categories
 	if currentIndex >= 0 && currentIndex < len(visibleCategories)-1 {
-		rightArrow = arrowStyleGreen.Render(" ▶")
+		rightArrow = arrowStyle.Render(" ▶")
 	} else {
 		rightArrow = "  "
 	}

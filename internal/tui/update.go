@@ -169,6 +169,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.projects = msg.projects
 			m.errorMsg = ""
+
+			// Ensure selected category is visible when hideClean is enabled
+			if m.hideClean && len(m.categories) > 0 {
+				// Check if current selected category has changes
+				currentCat := ""
+				if m.selectedCategory < len(m.categories) {
+					currentCat = m.categories[m.selectedCategory]
+				}
+
+				// If current category has no changes, select first visible category
+				if currentCat != "" && !m.categoryHasChanges(currentCat) {
+					visibleCategories := m.getVisibleCategories()
+					if len(visibleCategories) > 0 {
+						// Find first visible category in full list
+						for i, cat := range m.categories {
+							if cat == visibleCategories[0] {
+								m.selectedCategory = i
+								m.selectedProject = 0
+								break
+							}
+						}
+					}
+				}
+			}
 		}
 
 	case spinner.TickMsg:
