@@ -72,10 +72,6 @@ changelog:
 
 release:
   header: |
-    {{- $version := replace .Tag "v" "" -}}
-    {{- $changelogPath := printf "changelogs/%s.md" $version -}}
-    {{- if fileExists $changelogPath -}}
-    {{- readFile $changelogPath -}}
-    {{- else -}}
-    Release {{ .Tag }}
-    {{- end -}}
+    ## Release {{ .Tag }}
+
+    For detailed changelog, see: [changelogs/{{ replace .Tag "v" "" }}.md](https://github.com/uralys/check-projects/blob/main/changelogs/{{ replace .Tag "v" "" }}.md)
