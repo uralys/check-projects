@@ -52,6 +52,7 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 
 changelog:
+  use: github
   sort: asc
   filters:
     exclude:
@@ -68,3 +69,13 @@ changelog:
       order: 1
     - title: Others
       order: 999
+
+release:
+  header: |
+    {{- $version := replace .Tag "v" "" -}}
+    {{- $changelogPath := printf "changelogs/%s.md" $version -}}
+    {{- if fileExists $changelogPath -}}
+    {{- readFile $changelogPath -}}
+    {{- else -}}
+    Release {{ .Tag }}
+    {{- end -}}

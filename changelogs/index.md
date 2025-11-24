@@ -4,6 +4,7 @@ All notable changes to check-projects will be listed here.
 
 ## Versions
 
+- [v1.2.5](./1.2.5.md) - 2025-11-24 - Remote branch tracking & automatic fetching in TUI
 - [v1.2.4](./1.2.4.md) - 2025-11-22 - TUI category selection fixes & UI improvements
 - [v1.2.3](./1.2.3.md) - 2025-11-21 - TUI bug fixes & staged changes detection
 - [v1.2.0](./1.2.0.md) - 2025-11-21 - Remote status detection & new config options

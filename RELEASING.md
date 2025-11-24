@@ -12,7 +12,20 @@ Releases are fully automated using:
 
 ## Creating a Release
 
-### 1. Update Version
+### 1. Create Changelog
+
+Create a new changelog file for the version in `changelogs/{version}.md`:
+
+```bash
+# Example: changelogs/1.2.5.md
+# Follow the format from existing changelogs
+```
+
+Update `changelogs/index.md` to add the new version entry at the top of the list.
+
+**Note**: GoReleaser automatically uses these changelog files for GitHub release notes.
+
+### 2. Update Version
 
 Ensure your code is ready and tests pass:
 
@@ -21,7 +34,7 @@ make test
 make build
 ```
 
-### 2. Create and Push Tag
+### 3. Create and Push Tag
 
 ```bash
 # Create an annotated tag
@@ -31,7 +44,7 @@ git tag -a v1.0.0 -m "Release v1.0.0: Description of changes"
 git push origin v1.0.0
 ```
 
-### 3. Automatic Process
+### 4. Automatic Process
 
 GitHub Actions will automatically:
 
@@ -50,7 +63,7 @@ GitHub Actions will automatically:
    - Downloadable archives (.tar.gz, .zip)
    - Checksums file
 
-### 4. Verify Release
+### 5. Verify Release
 
 1. Go to [GitHub Releases](https://github.com/uralys/check-projects/releases)
 2. Verify the new release is published
