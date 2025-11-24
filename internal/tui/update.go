@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -27,6 +29,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Refresh
 			m.loading = true
 			return m, scanProjectsCmd(m.config)
+
+		case "f":
+			// Fetch selected project
+			filtered := m.getFilteredProjects()
+			if len(filtered) > 0 && m.selectedProject < len(filtered) {
+				// Find the actual index in m.projects
+				selectedProj := filtered[m.selectedProject]
+				actualIndex := -1
+				for i, p := range m.projects {
+					if p.Project.Path == selectedProj.Project.Path {
+						actualIndex = i
+						break
+					}
+				}
+
+				if actualIndex != -1 {
+					m.fetchingProject = actualIndex
+					return m, fetchProjectCmd(&m.projects[actualIndex], actualIndex)
+				}
+			}
 
 		case "h":
 			// Toggle hide clean
@@ -193,6 +215,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
+		}
+
+	case fetchingMsg:
+		// Mark project as being fetched
+		m.fetchingProject = msg.projectIndex
+
+	case fetchCompleteMsg:
+		// Clear fetching state
+		m.fetchingProject = -1
+
+		if msg.err != nil {
+			// Show error briefly (could be improved with a status bar)
+			m.errorMsg = fmt.Sprintf("Fetch failed: %v", msg.err)
+		} else {
+			// Clear any error
+			m.errorMsg = ""
 		}
 
 	case spinner.TickMsg:

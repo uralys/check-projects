@@ -52,6 +52,11 @@ func (r *Reporter) Report(results []ProjectResult) {
 			allClean = false
 			break
 		}
+		// Also check if there are behind branches
+		if len(result.Status.BehindBranches) > 0 {
+			allClean = false
+			break
+		}
 	}
 
 	if allClean && !r.verbose {
@@ -73,6 +78,11 @@ func (r *Reporter) displayCategory(category string, results []ProjectResult) {
 			allClean = false
 			break
 		}
+		// Also check if there are behind branches
+		if len(result.Status.BehindBranches) > 0 {
+			allClean = false
+			break
+		}
 	}
 
 	// Display category header
@@ -90,8 +100,8 @@ func (r *Reporter) displayCategory(category string, results []ProjectResult) {
 				continue
 			}
 
-			// Skip clean projects unless verbose mode
-			if r.config.Display.HideClean && !r.verbose && result.Status.Type == git.StatusSync {
+			// Skip clean projects unless verbose mode or they have behind branches
+			if r.config.Display.HideClean && !r.verbose && result.Status.Type == git.StatusSync && len(result.Status.BehindBranches) == 0 {
 				continue
 			}
 
@@ -113,6 +123,8 @@ func (r *Reporter) displayProject(result ProjectResult) {
 	case git.StatusSync:
 		// Green tick + white project name
 		fmt.Printf("  %s %s\n", green(result.Status.Symbol), result.Name)
+		// Display behind branches even for clean projects
+		r.displayBehindBranches(result)
 	case git.StatusUnsync:
 		// Special handling for staged changes (✱ followed by letter)
 		if len(result.Status.Symbol) >= 3 && result.Status.Symbol[0:3] == "✱ " {
@@ -125,17 +137,29 @@ func (r *Reporter) displayProject(result ProjectResult) {
 			message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
 			fmt.Printf("  %s\n", red(message))
 		}
+		r.displayBehindBranches(result)
 	case git.StatusError:
 		// Red error
 		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
 		fmt.Printf("  %s\n", red(message))
+		r.displayBehindBranches(result)
 	case git.StatusNoUpstream:
 		// Yellow/default for no upstream
 		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
 		fmt.Printf("  %s\n", message)
+		r.displayBehindBranches(result)
 	default:
 		// Default color
 		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
 		fmt.Printf("  %s\n", message)
+		r.displayBehindBranches(result)
+	}
+}
+
+func (r *Reporter) displayBehindBranches(result ProjectResult) {
+	if len(result.Status.BehindBranches) > 0 {
+		for _, branch := range result.Status.BehindBranches {
+			fmt.Printf("    %s %s: %s\n", red("↓"), branch.Branch, branch.Message)
+		}
 	}
 }

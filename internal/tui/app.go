@@ -77,3 +77,33 @@ func scanProjectsCmd(cfg *config.Config) tea.Cmd {
 		}
 	}
 }
+
+// fetchProjectCmd fetches a single project and refreshes its status
+func fetchProjectCmd(projectWithStatus *ProjectWithStatus, projectIndex int) tea.Cmd {
+	return func() tea.Msg {
+		// Fetch from remote
+		if err := projectWithStatus.Project.Repository.Fetch(); err != nil {
+			return fetchCompleteMsg{
+				projectIndex: projectIndex,
+				err:          err,
+			}
+		}
+
+		// Get updated status after fetch
+		status, err := projectWithStatus.Project.Repository.GetStatus()
+		if err != nil {
+			return fetchCompleteMsg{
+				projectIndex: projectIndex,
+				err:          err,
+			}
+		}
+
+		// Update the status in the project
+		projectWithStatus.Status = status
+
+		return fetchCompleteMsg{
+			projectIndex: projectIndex,
+			err:          nil,
+		}
+	}
+}

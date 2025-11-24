@@ -16,9 +16,10 @@ type Model struct {
 	projects []ProjectWithStatus
 
 	// UI state
-	loading   bool
-	hideClean bool
-	errorMsg  string
+	loading         bool
+	hideClean       bool
+	errorMsg        string
+	fetchingProject int // Index of project being fetched (-1 means none)
 
 	// Selection
 	selectedCategory int
@@ -61,6 +62,7 @@ func NewModel(cfg *config.Config, version string) Model {
 		selectedCategory: 0,
 		selectedProject:  0,
 		version:          version,
+		fetchingProject:  -1, // No project being fetched initially
 	}
 }
 
@@ -82,8 +84,8 @@ func (m Model) getFilteredProjects() []ProjectWithStatus {
 			continue
 		}
 
-		// Filter by clean status
-		if m.hideClean && p.Status != nil && p.Status.Type == git.StatusSync {
+		// Filter by clean status - skip if clean AND no behind branches
+		if m.hideClean && p.Status != nil && p.Status.Type == git.StatusSync && len(p.Status.BehindBranches) == 0 {
 			continue
 		}
 
@@ -93,12 +95,19 @@ func (m Model) getFilteredProjects() []ProjectWithStatus {
 	return filtered
 }
 
-// categoryHasChanges checks if a category has any projects with changes
+// categoryHasChanges checks if a category has any projects with changes or behind branches
 func (m Model) categoryHasChanges(categoryName string) bool {
 	for _, p := range m.projects {
 		if p.Project.Category == categoryName {
-			if p.Status != nil && p.Status.Type != git.StatusSync {
-				return true
+			if p.Status != nil {
+				// Check if status is not clean
+				if p.Status.Type != git.StatusSync {
+					return true
+				}
+				// Check if there are branches behind remote
+				if len(p.Status.BehindBranches) > 0 {
+					return true
+				}
 			}
 		}
 	}
@@ -121,11 +130,18 @@ func (m Model) getVisibleCategories() []string {
 	return visible
 }
 
-// hasAnyChanges checks if there are any projects with changes across all categories
+// hasAnyChanges checks if there are any projects with changes or behind branches across all categories
 func (m Model) hasAnyChanges() bool {
 	for _, p := range m.projects {
-		if p.Status != nil && p.Status.Type != git.StatusSync {
-			return true
+		if p.Status != nil {
+			// Check if status is not clean
+			if p.Status.Type != git.StatusSync {
+				return true
+			}
+			// Check if there are branches behind remote
+			if len(p.Status.BehindBranches) > 0 {
+				return true
+			}
 		}
 	}
 	return false

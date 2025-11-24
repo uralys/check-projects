@@ -16,3 +16,14 @@ type scanCompleteMsg struct {
 	projects []ProjectWithStatus
 	err      error
 }
+
+// fetchCompleteMsg is sent when a fetch operation is complete
+type fetchCompleteMsg struct {
+	projectIndex int
+	err          error
+}
+
+// fetchingMsg is sent when a fetch operation starts
+type fetchingMsg struct {
+	projectIndex int
+}

@@ -304,6 +304,15 @@ func renderProjectsList(m Model, width, height int) string {
 		}
 
 		line := fmt.Sprintf("%s%s %s", prefix, renderedStatus, style.Render(p.Project.Name))
+
+		// Add fetching indicator if this project is being fetched
+		for j, fullProj := range m.projects {
+			if fullProj.Project.Path == p.Project.Path && j == m.fetchingProject {
+				line += lipgloss.NewStyle().Foreground(colorVersion).Render(" (fetching...)")
+				break
+			}
+		}
+
 		lines = append(lines, line)
 	}
 
@@ -348,12 +357,31 @@ func renderDetailsPanel(m Model, width, height int) string {
 
 	selectedProj := filtered[m.selectedProject]
 
+	// Check if this project is being fetched
+	isFetching := false
+	for i, p := range m.projects {
+		if p.Project.Path == selectedProj.Project.Path && i == m.fetchingProject {
+			isFetching = true
+			break
+		}
+	}
+
 	// Build content lines
 	var contentLines []string
 
 	// Path
 	contentLines = append(contentLines, labelStyle.Render(selectedProj.Project.Path))
 	contentLines = append(contentLines, "") // Empty line
+
+	// If fetching, show loader and return early
+	if isFetching {
+		contentLines = append(contentLines, "")
+		contentLines = append(contentLines, lipgloss.NewStyle().Foreground(colorVersion).Render("⟳ Fetching from remote..."))
+		contentLines = append(contentLines, "")
+
+		// Pad and return early
+		return renderDetailsPanelContent(contentLines, width, height, 0, false)
+	}
 
 	// Always check remote status first
 	remoteStatus := getRemoteStatus(selectedProj.Project.Path)
@@ -396,6 +424,12 @@ func renderDetailsPanel(m Model, width, height int) string {
 		}
 	} else {
 		// Project is clean - show remote status
+		// Get and show branch name
+		branchName := getGitBranch(selectedProj.Project.Path)
+		if branchName != "" {
+			contentLines = append(contentLines, labelStyle.Render(fmt.Sprintf("[%s]", branchName)))
+		}
+
 		// Show local status
 		contentLines = append(contentLines, statusCleanStyle.Render("✔")+" No local changes")
 
@@ -411,15 +445,30 @@ func renderDetailsPanel(m Model, width, height int) string {
 		}
 	}
 
+	// Show behind branches if any
+	if selectedProj.Status != nil && len(selectedProj.Status.BehindBranches) > 0 {
+		contentLines = append(contentLines, "") // Empty line
+		contentLines = append(contentLines, labelStyle.Render("Branches behind remote:"))
+		for _, branch := range selectedProj.Status.BehindBranches {
+			contentLines = append(contentLines, statusErrorStyle.Render("  ↓")+" "+branch.Branch+": "+branch.Message)
+		}
+	}
+
+	// Render the content with scrolling
+	return renderDetailsPanelContent(contentLines, width, height, m.detailsScroll, true)
+}
+
+// renderDetailsPanelContent handles the scrolling and padding for details panel content
+func renderDetailsPanelContent(contentLines []string, width, height, scrollOffset int, enableScroll bool) string {
 	// Calculate scroll window
 	availableHeight := height
 	if availableHeight < 1 {
 		availableHeight = 1
 	}
 
-	startIdx := m.detailsScroll
+	startIdx := scrollOffset
 	endIdx := startIdx + availableHeight
-	needsScroll := len(contentLines) > availableHeight
+	needsScroll := enableScroll && len(contentLines) > availableHeight
 
 	// Adjust scroll bounds
 	if endIdx > len(contentLines) {
@@ -632,7 +681,7 @@ func renderFooter(m Model) string {
 }
 
 func renderHelpBar(m Model) string {
-	help := "q/esc: quit | ↑↓: scroll | ←→: categories | enter: switch panel | h: toggle clean | r: refresh"
+	help := "q/esc: quit | ↑↓: scroll | ←→: categories | enter: switch panel | h: toggle clean | f: fetch | r: refresh"
 	if m.hideClean {
 		help = strings.Replace(help, "toggle clean", "show clean", 1)
 	} else {
