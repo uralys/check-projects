@@ -149,11 +149,11 @@ func renderSplitView(m Model) string {
 		PaddingRight(2).
 		PaddingTop(0).
 		PaddingBottom(0).
-		Width(m.width - 4).
+		Width(m.width - 2).
 		Render(innerContent)
 
 	b.WriteString(headerContent)
-	b.WriteString("\n\n")
+	b.WriteString("\n")
 
 	// Calculate dimensions for split panels
 	// Total available width for both panels
@@ -162,8 +162,8 @@ func renderSplitView(m Model) string {
 	rightWidth := totalPanelsWidth - leftWidth
 
 	// Height calculation - use fixed reserved space like width
-	// Reserve: top margin (1) + header box (~4-5) + blank lines (2) + footer (2) = ~10 lines
-	reservedHeight := 10
+	// Reserve: top margin (1) + header box (~4-5) + blank line (1) + footer (2) = ~9 lines
+	reservedHeight := 9
 
 	// Remaining height for panels (including their borders)
 	panelTotalHeight := m.height - reservedHeight
@@ -293,6 +293,10 @@ func renderProjectsList(m Model, width, height int) string {
 					// Staged changes: ✱ (red) + letter (green)
 					letter := strings.TrimPrefix(statusSymbol, "✱ ")
 					renderedStatus = statusErrorStyle.Render("✱") + " " + statusCleanStyle.Render(letter)
+				} else if strings.HasPrefix(statusSymbol, "* ") {
+					// Unstaged changes: * (red) + letter (red)
+					letter := strings.TrimPrefix(statusSymbol, "* ")
+					renderedStatus = statusErrorStyle.Render("*") + " " + statusErrorStyle.Render(letter)
 				} else {
 					renderedStatus = statusUnsyncStyle.Render(statusSymbol)
 				}
@@ -371,7 +375,6 @@ func renderDetailsPanel(m Model, width, height int) string {
 
 	// Path
 	contentLines = append(contentLines, labelStyle.Render(selectedProj.Project.Path))
-	contentLines = append(contentLines, "") // Empty line
 
 	// If fetching, show loader and return early
 	if isFetching {
@@ -849,8 +852,13 @@ func colorizeGitStatus(gitOutput string) string {
 			star := lipgloss.NewStyle().Foreground(colorStatusError).Render("✱")   // Red
 			letter := lipgloss.NewStyle().Foreground(colorStatusClean).Render("R") // Green
 			coloredLine = star + " " + letter + " " + fileName
-		} else if indexStatus == "A" || indexStatus == "M" || indexStatus == "D" {
-			// Green for staged/added
+		} else if indexStatus == "M" || indexStatus == "D" {
+			// Staged modified/deleted - display as "* M" or "* D" with red
+			star := lipgloss.NewStyle().Foreground(colorStatusError).Render("*")           // Red
+			letter := lipgloss.NewStyle().Foreground(colorStatusError).Render(indexStatus) // Red
+			coloredLine = star + " " + letter + " " + fileName
+		} else if indexStatus == "A" {
+			// Staged added - green
 			statusPart := lipgloss.NewStyle().Foreground(colorStatusClean).Render(statusCodes) // Green
 			coloredLine = statusPart + " " + fileName
 		} else if indexStatus == "?" && workTreeStatus == "?" {
@@ -858,9 +866,11 @@ func colorizeGitStatus(gitOutput string) string {
 			statusPart := lipgloss.NewStyle().Foreground(colorStatusError).Render("??") // Red
 			coloredLine = statusPart + " " + fileName
 		} else if workTreeStatus == "M" || workTreeStatus == "D" {
-			// Red for modified/deleted in worktree
-			statusPart := lipgloss.NewStyle().Foreground(colorStatusError).Render(statusCodes) // Red
-			coloredLine = statusPart + " " + fileName
+			// Red for modified/deleted in worktree (unstaged changes)
+			// Display as "* M" or "* D" to match project list format
+			star := lipgloss.NewStyle().Foreground(colorStatusError).Render("*")              // Red
+			letter := lipgloss.NewStyle().Foreground(colorStatusError).Render(workTreeStatus) // Red
+			coloredLine = star + " " + letter + " " + fileName
 		} else {
 			coloredLine = line
 		}
