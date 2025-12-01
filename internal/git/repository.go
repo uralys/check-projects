@@ -32,17 +32,33 @@ func NewRepository(path, name string) *Repository {
 	}
 }
 
-// SetUpstream configures and pushes to set upstream tracking
+// SetUpstream configures upstream tracking locally without pushing
 func (r *Repository) SetUpstream() error {
-	cmd := exec.Command("git", "push", "--set-upstream", "origin", "HEAD")
-	cmd.Dir = r.Path
+	// Get current branch name
+	branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	branchCmd.Dir = r.Path
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	var branchOut bytes.Buffer
+	branchCmd.Stdout = &branchOut
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set upstream: %s", stderr.String())
+	if err := branchCmd.Run(); err != nil {
+		return fmt.Errorf("failed to get current branch: %v", err)
+	}
+
+	branch := bytes.TrimSpace(branchOut.Bytes())
+	branchName := string(branch)
+
+	// Set remote tracking locally (without pushing)
+	remoteCmd := exec.Command("git", "config", fmt.Sprintf("branch.%s.remote", branchName), "origin")
+	remoteCmd.Dir = r.Path
+	if err := remoteCmd.Run(); err != nil {
+		return fmt.Errorf("failed to set branch remote: %v", err)
+	}
+
+	mergeCmd := exec.Command("git", "config", fmt.Sprintf("branch.%s.merge", branchName), fmt.Sprintf("refs/heads/%s", branchName))
+	mergeCmd.Dir = r.Path
+	if err := mergeCmd.Run(); err != nil {
+		return fmt.Errorf("failed to set branch merge: %v", err)
 	}
 
 	return nil

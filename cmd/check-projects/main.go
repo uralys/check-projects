@@ -225,9 +225,19 @@ func fetchProjects(projects []scanner.Project) {
 func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []reporter.ProjectResult) error {
 	for i, result := range results {
 		if result.Status.Type == git.StatusNoUpstream {
-			fmt.Printf("\n⚠ Repository '%s' has no upstream configured. Setting upstream...\n", result.Name)
+			fmt.Printf("\n⚠ Repository '%s' has no upstream configured.\n", result.Name)
+			fmt.Printf("Set upstream tracking locally? (y/n): ")
 
-			// Automatically try to set upstream
+			var response string
+			if _, err := fmt.Scanln(&response); err != nil {
+				continue
+			}
+
+			if response != "y" && response != "Y" {
+				continue
+			}
+
+			// Try to set upstream locally
 			if err := projects[i].Repository.SetUpstream(); err != nil {
 				// Failed - prompt user to ignore
 				fmt.Printf("❌ Failed to set upstream: %v\n", err)
