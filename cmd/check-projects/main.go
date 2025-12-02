@@ -225,15 +225,20 @@ func fetchProjects(projects []scanner.Project) {
 func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []reporter.ProjectResult) error {
 	for i, result := range results {
 		if result.Status.Type == git.StatusNoUpstream {
-			fmt.Printf("\n⚠ Repository '%s' has no upstream configured.\n", result.Name)
-			fmt.Printf("Set upstream tracking locally? (y/n): ")
+			branchName := "unknown"
+			if branch, err := projects[i].Repository.GetCurrentBranch(); err == nil {
+				branchName = branch
+			}
+			fmt.Printf("\n🧚🏻‍♀️ Repository '%s' has no upstream configured for branch '\033[95m%s\033[0m'.\n", result.Name, branchName)
+			fmt.Printf("\033[38;5;208mSet upstream tracking locally?\033[0m \033[92m(Y/n):\033[0m ")
 
 			var response string
 			if _, err := fmt.Scanln(&response); err != nil {
-				continue
+				// Enter pressed without input - default to yes
+				response = "y"
 			}
 
-			if response != "y" && response != "Y" {
+			if response == "n" || response == "N" {
 				continue
 			}
 
@@ -286,7 +291,7 @@ func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []
 					return fmt.Errorf("failed to get updated status: %w", err)
 				}
 				results[i].Status = newStatus
-				fmt.Printf("✅ Upstream configured successfully\n")
+				fmt.Printf("✅ Upstream configured \033[92msuccessfully\033[0m\n")
 			}
 		}
 	}

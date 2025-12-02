@@ -32,6 +32,21 @@ func NewRepository(path, name string) *Repository {
 	}
 }
 
+// GetCurrentBranch returns the name of the current branch
+func (r *Repository) GetCurrentBranch() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = r.Path
+
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("failed to get current branch: %v", err)
+	}
+
+	return string(bytes.TrimSpace(stdout.Bytes())), nil
+}
+
 // SetUpstream configures upstream tracking locally without pushing
 func (r *Repository) SetUpstream() error {
 	// Get current branch name
