@@ -29,6 +29,7 @@ type Status struct {
 	Type            StatusType
 	Message         string
 	Symbol          string
+	Branch          string           // Current branch name
 	BehindBranches  []BranchTracking // Branches that are behind their remote
 }
 
@@ -131,6 +132,9 @@ func (r *Repository) GetBranchesTrackingStatus() ([]BranchTracking, error) {
 
 // GetStatus retrieves the git status of a repository
 func (r *Repository) GetStatus() (*Status, error) {
+	// Get current branch name
+	branch, _ := r.GetCurrentBranch()
+
 	// Check all branches for tracking status
 	behindBranches, err := r.GetBranchesTrackingStatus()
 	if err != nil {
@@ -155,6 +159,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 				Type:           StatusNoUpstream,
 				Message:        "No upstream configured",
 				Symbol:         "⚠ No upstream",
+				Branch:         branch,
 				BehindBranches: behindBranches,
 			}, nil
 		}
@@ -173,6 +178,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusError,
 			Message:        fmt.Sprintf("Error: %s", stderr.String()),
 			Symbol:         "❌",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -188,6 +194,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 				Type:           StatusUnsync,
 				Message:        "Staged renames",
 				Symbol:         "✱ R",
+				Branch:         branch,
 				BehindBranches: behindBranches,
 			}, nil
 		}
@@ -196,6 +203,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 				Type:           StatusUnsync,
 				Message:        "Staged files",
 				Symbol:         "✱ +",
+				Branch:         branch,
 				BehindBranches: behindBranches,
 			}, nil
 		}
@@ -204,6 +212,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Staged changes",
 			Symbol:         "✱",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -213,6 +222,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Modified files",
 			Symbol:         "* M",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -222,6 +232,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Deleted files",
 			Symbol:         "* D",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -231,6 +242,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Untracked files",
 			Symbol:         "✱ ✚",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -240,6 +252,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Ahead of remote",
 			Symbol:         "⬆",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -249,6 +262,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Behind remote",
 			Symbol:         "↓",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -258,6 +272,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusUnsync,
 			Message:        "Diverged from remote",
 			Symbol:         "⬆⬆",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -267,6 +282,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 			Type:           StatusSync,
 			Message:        "Clean",
 			Symbol:         "✔",
+			Branch:         branch,
 			BehindBranches: behindBranches,
 		}, nil
 	}
@@ -276,6 +292,7 @@ func (r *Repository) GetStatus() (*Status, error) {
 		Type:           StatusUnsync,
 		Message:        "Unknown state",
 		Symbol:         "*",
+		Branch:         branch,
 		BehindBranches: behindBranches,
 	}, nil
 }

@@ -11,6 +11,7 @@ import (
 var (
 	green     = color.New(color.FgGreen).SprintFunc()
 	red       = color.New(color.FgRed).SprintFunc()
+	blue      = color.New(color.FgCyan, color.Bold).SprintFunc()
 	greenBold = color.New(color.FgGreen, color.Bold).SprintFunc()
 	redBold   = color.New(color.FgRed, color.Bold).SprintFunc()
 	underline = color.New(color.Bold, color.Underline).SprintFunc()
@@ -131,7 +132,18 @@ func (r *Reporter) displayProject(result ProjectResult) {
 			// Symbol is "✱ X" where X is R, +, M, etc.
 			// Show ✱ in red, X in green
 			letter := result.Status.Symbol[len("✱ "):]
-			fmt.Printf("  %s %s %s\n", red("✱"), green(letter), result.Name)
+			if result.Status.Branch != "" {
+				fmt.Printf("  %s %s %s - %s\n", red("✱"), green(letter), result.Name, blue(result.Status.Branch))
+			} else {
+				fmt.Printf("  %s %s %s\n", red("✱"), green(letter), result.Name)
+			}
+		} else if result.Status.Symbol == "⬆" && result.Status.Branch != "" {
+			// Ahead of remote - show branch name in blue
+			fmt.Printf("  %s %s - %s\n", green(result.Status.Symbol), result.Name, blue(result.Status.Branch))
+		} else if result.Status.Branch != "" {
+			// Other unsync status with branch - show branch name in blue
+			message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+			fmt.Printf("  %s - %s\n", red(message), blue(result.Status.Branch))
 		} else {
 			// Regular unsync status - all red
 			message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
