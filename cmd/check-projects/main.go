@@ -98,18 +98,14 @@ func buildLongDescription() string {
 	// Add version info
 	description += fmt.Sprintf("\n  Version: %s (built: %s)", Version, BuildTime)
 
-	// Check for updates
-	updateStatus := updater.GetUpdateStatus(Version)
-	if updateStatus != "" {
-		description += "\n" + updateStatus
-	}
+	// Note: Update check moved to run() to avoid blocking startup
 
 	return description
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	// Check for updates (non-blocking)
-	_ = updater.CheckForUpdates(Version)
+	// Check for updates in background (truly non-blocking)
+	updateCh := updater.CheckForUpdatesAsync(Version)
 
 	// Load configuration
 	cfg, err := config.LoadConfig(configPath)
@@ -197,6 +193,14 @@ func run(cmd *cobra.Command, args []string) error {
 	// Handle repositories without upstream after the report
 	if err := handleNoUpstream(cfg, projects, results); err != nil {
 		return err
+	}
+
+	// Check if update is available (non-blocking read)
+	select {
+	case result := <-updateCh:
+		updater.PrintUpdateNotice(result)
+	default:
+		// Update check still in progress, skip notification
 	}
 
 	return nil

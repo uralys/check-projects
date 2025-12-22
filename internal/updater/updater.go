@@ -55,7 +55,63 @@ func GetUpdateStatus(currentVersion string) string {
 	return fmt.Sprintf("Status: %s", green("Up to date"))
 }
 
-// CheckForUpdates checks if a new version is available
+// UpdateResult holds the result of an async update check
+type UpdateResult struct {
+	Available      bool
+	CurrentVersion string
+	LatestVersion  string
+}
+
+// CheckForUpdatesAsync checks for updates in the background and returns a channel
+func CheckForUpdatesAsync(currentVersion string) <-chan *UpdateResult {
+	ch := make(chan *UpdateResult, 1)
+
+	go func() {
+		defer close(ch)
+
+		// Skip check if version is "dev" or empty
+		if currentVersion == "" || currentVersion == "dev" || strings.Contains(currentVersion, "dirty") {
+			ch <- nil
+			return
+		}
+
+		latestVersion, err := getLatestVersion()
+		if err != nil {
+			ch <- nil
+			return
+		}
+
+		current := strings.TrimPrefix(currentVersion, "v")
+		latest := strings.TrimPrefix(latestVersion, "v")
+
+		if current != latest {
+			ch <- &UpdateResult{
+				Available:      true,
+				CurrentVersion: current,
+				LatestVersion:  latest,
+			}
+		} else {
+			ch <- &UpdateResult{Available: false}
+		}
+	}()
+
+	return ch
+}
+
+// PrintUpdateNotice prints an update notice if available
+func PrintUpdateNotice(result *UpdateResult) {
+	if result == nil || !result.Available {
+		return
+	}
+
+	fmt.Printf("\n%s %s → %s\n",
+		yellow("⚠ New version available:"),
+		cyan(result.CurrentVersion),
+		green(result.LatestVersion))
+	fmt.Printf("Run %s to update\n", cyan("check-projects --help"))
+}
+
+// CheckForUpdates checks if a new version is available (blocking, with prompt)
 func CheckForUpdates(currentVersion string) error {
 	// Skip check if version is "dev" or empty
 	if currentVersion == "" || currentVersion == "dev" || strings.Contains(currentVersion, "dirty") {
