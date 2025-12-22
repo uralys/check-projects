@@ -155,7 +155,6 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Fetch from remote if enabled
 	if shouldFetch {
-		fmt.Println("Fetching from remote repositories...")
 		fetchProjects(projects)
 	}
 
@@ -205,7 +204,30 @@ func run(cmd *cobra.Command, args []string) error {
 
 func fetchProjects(projects []scanner.Project) {
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 	sem := make(chan struct{}, 10) // Limit concurrency to 10
+
+	total := len(projects)
+	completed := 0
+
+	printProgress := func() {
+		barWidth := 20
+		progress := float64(completed) / float64(total)
+		filled := int(progress * float64(barWidth))
+
+		bar := ""
+		for i := 0; i < barWidth; i++ {
+			if i < filled {
+				bar += "█"
+			} else {
+				bar += "░"
+			}
+		}
+
+		fmt.Printf("\rFetching [%s] %d/%d projects", bar, completed, total)
+	}
+
+	printProgress()
 
 	for _, project := range projects {
 		wg.Add(1)
@@ -216,10 +238,16 @@ func fetchProjects(projects []scanner.Project) {
 
 			// Silently fetch - ignore errors
 			_ = proj.Repository.Fetch()
+
+			mu.Lock()
+			completed++
+			printProgress()
+			mu.Unlock()
 		}(project)
 	}
 
 	wg.Wait()
+	fmt.Println() // New line after progress bar completes
 }
 
 func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []reporter.ProjectResult) error {
