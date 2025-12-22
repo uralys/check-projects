@@ -41,3 +41,4 @@ display:
 # Default behavior options
 use_tui_by_default: false  # Set to true to always launch in TUI mode (same as --tui flag)
 fetch: true                # Set to true to always fetch from remote before checking status (same as --fetch/-f flag)
+fetch_concurrency: 10      # Number of parallel fetches (default: 10)

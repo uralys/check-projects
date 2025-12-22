@@ -55,6 +55,11 @@ func loadFromFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file %s: %w", path, err)
 	}
 
+	// Apply defaults for zero values
+	if config.FetchConcurrency <= 0 {
+		config.FetchConcurrency = 10
+	}
+
 	return config, nil
 }
 

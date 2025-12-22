@@ -12,6 +12,7 @@ type Config struct {
 	Display          Display    `yaml:"display"`
 	UseTUIByDefault  bool       `yaml:"use_tui_by_default"`
 	Fetch            bool       `yaml:"fetch"`
+	FetchConcurrency int        `yaml:"fetch_concurrency"`
 
 	// Internal: path where config was loaded from (not serialized)
 	ConfigPath string `yaml:"-"`
@@ -59,7 +60,8 @@ func DefaultConfig() *Config {
 			HideClean:   true,
 			HideIgnored: true,
 		},
-		UseTUIByDefault: false,
-		Fetch:           false,
+		UseTUIByDefault:  false,
+		Fetch:            false,
+		FetchConcurrency: 10,
 	}
 }

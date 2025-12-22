@@ -155,7 +155,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Fetch from remote if enabled
 	if shouldFetch {
-		fetchProjects(projects)
+		fetchProjects(projects, cfg.FetchConcurrency)
 	}
 
 	// Check git status for each project concurrently
@@ -202,10 +202,10 @@ func run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func fetchProjects(projects []scanner.Project) {
+func fetchProjects(projects []scanner.Project, concurrency int) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	sem := make(chan struct{}, 10) // Limit concurrency to 10
+	sem := make(chan struct{}, concurrency)
 
 	total := len(projects)
 	completed := 0

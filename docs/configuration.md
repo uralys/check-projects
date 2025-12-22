@@ -84,3 +84,18 @@ When set to `true`, only shows projects with changes in CLI mode (default: `true
 ### hide_ignored
 
 When set to `true`, hides ignored projects from the output (default: `true`).
+
+## Fetch Options
+
+### fetch
+
+When set to `true`, always fetch from remote before checking status (default: `false`).
+
+### fetch_concurrency
+
+Number of parallel fetches when using `-f` or `fetch: true` (default: `10`).
+
+```yaml
+fetch: true
+fetch_concurrency: 30  # Run up to 30 fetches in parallel
+```
