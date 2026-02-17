@@ -31,30 +31,6 @@ type GitHubRelease struct {
 	HTMLURL string `json:"html_url"`
 }
 
-// GetUpdateStatus returns a status message about updates (for help display)
-func GetUpdateStatus(currentVersion string) string {
-	// Skip check if version is "dev" or empty
-	if currentVersion == "" || currentVersion == "dev" || strings.Contains(currentVersion, "dirty") {
-		return ""
-	}
-
-	latestVersion, err := getLatestVersion()
-	if err != nil {
-		// Silently fail - don't block the user
-		return ""
-	}
-
-	// Normalize versions (remove 'v' prefix if present)
-	current := strings.TrimPrefix(currentVersion, "v")
-	latest := strings.TrimPrefix(latestVersion, "v")
-
-	if current != latest {
-		return fmt.Sprintf("Status: %s (latest: %s)", yellow("Update available"), green(latest))
-	}
-
-	return fmt.Sprintf("Status: %s", green("Up to date"))
-}
-
 // UpdateResult holds the result of an async update check
 type UpdateResult struct {
 	Available      bool
@@ -108,7 +84,7 @@ func PrintUpdateNotice(result *UpdateResult) {
 		yellow("⚠ New version available:"),
 		cyan(result.CurrentVersion),
 		green(result.LatestVersion))
-	fmt.Printf("Run %s to update\n", cyan("check-projects --help"))
+	fmt.Printf("Run %s to update\n", cyan("check-projects --update"))
 }
 
 // CheckForUpdates checks if a new version is available (blocking, with prompt)
@@ -128,15 +104,18 @@ func CheckForUpdates(currentVersion string) error {
 	current := strings.TrimPrefix(currentVersion, "v")
 	latest := strings.TrimPrefix(latestVersion, "v")
 
-	if current != latest {
-		fmt.Printf("\n%s %s → %s\n",
-			yellow("⚠ New version available:"),
-			cyan(current),
-			green(latest))
+	if current == latest {
+		fmt.Printf("%s %s\n", green("✔"), fmt.Sprintf("Already up to date (%s)", cyan(current)))
+		return nil
+	}
 
-		if err := promptAndInstall(); err != nil {
-			fmt.Printf("Update cancelled or failed: %v\n", err)
-		}
+	fmt.Printf("\n%s %s → %s\n",
+		yellow("⚠ New version available:"),
+		cyan(current),
+		green(latest))
+
+	if err := promptAndInstall(); err != nil {
+		fmt.Printf("Update cancelled or failed: %v\n", err)
 	}
 
 	return nil

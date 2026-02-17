@@ -15,11 +15,12 @@ import (
 )
 
 var (
-	configPath string
-	verbose    bool
-	category   string
-	useTUI     bool
-	fetchFlag  bool
+	configPath  string
+	verbose     bool
+	category    string
+	useTUI      bool
+	fetchFlag   bool
+	updateFlag  bool
 
 	// Version information (set by ldflags during build)
 	Version   = "dev"
@@ -39,6 +40,7 @@ func main() {
 	rootCmd.Flags().StringVar(&category, "category", "", "Only check projects in this category")
 	rootCmd.Flags().BoolVar(&useTUI, "tui", false, "Use interactive TUI mode")
 	rootCmd.Flags().BoolVarP(&fetchFlag, "fetch", "f", false, "Fetch from remote before checking status")
+	rootCmd.Flags().BoolVar(&updateFlag, "update", false, "Check for updates and install if available")
 	rootCmd.Version = fmt.Sprintf("%s (built: %s)", Version, BuildTime)
 
 	// Customize help template with colors
@@ -104,6 +106,11 @@ func buildLongDescription() string {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	// Handle --update flag: blocking check + install prompt
+	if updateFlag {
+		return updater.CheckForUpdates(Version)
+	}
+
 	// Check for updates in background (truly non-blocking)
 	updateCh := updater.CheckForUpdatesAsync(Version)
 
