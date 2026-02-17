@@ -33,9 +33,11 @@ func NewReporter(cfg *config.Config, verbose bool) *Reporter {
 
 // ProjectResult represents the result of checking a project
 type ProjectResult struct {
-	Name     string
-	Status   *git.Status
-	Category string
+	Name          string
+	Status        *git.Status
+	Category      string
+	IsSymlink     bool
+	SymlinkTarget string
 }
 
 // Report generates and displays the final report
@@ -120,49 +122,46 @@ func (r *Reporter) displayCategory(category string, results []ProjectResult) {
 }
 
 func (r *Reporter) displayProject(result ProjectResult) {
+	displayName := result.Name
+	if result.IsSymlink && result.SymlinkTarget != "" {
+		displayName = fmt.Sprintf("%s -> %s", result.Name, result.SymlinkTarget)
+	}
+
 	switch result.Status.Type {
 	case git.StatusSync:
-		// Green tick + white project name
-		fmt.Printf("  %s %s\n", green(result.Status.Symbol), result.Name)
-		// Display behind branches even for clean projects
+		fmt.Printf("  %s %s\n", green(result.Status.Symbol), displayName)
 		r.displayBehindBranches(result)
 	case git.StatusUnsync:
-		// Special handling for staged changes (✱ followed by letter)
 		if len(result.Status.Symbol) >= 3 && result.Status.Symbol[0:3] == "✱ " {
-			// Symbol is "✱ X" where X is R, +, M, etc.
-			// Show ✱ in red, X in green
 			letter := result.Status.Symbol[len("✱ "):]
 			if result.Status.Branch != "" {
-				fmt.Printf("  %s %s %s - %s\n", red("✱"), green(letter), result.Name, blue(result.Status.Branch))
+				fmt.Printf("  %s %s %s - %s\n", red("✱"), green(letter), displayName, blue(result.Status.Branch))
 			} else {
-				fmt.Printf("  %s %s %s\n", red("✱"), green(letter), result.Name)
+				fmt.Printf("  %s %s %s\n", red("✱"), green(letter), displayName)
 			}
 		} else if result.Status.Symbol == "⬆" && result.Status.Branch != "" {
-			// Ahead of remote - show branch name in blue
-			fmt.Printf("  %s %s - %s\n", green(result.Status.Symbol), result.Name, blue(result.Status.Branch))
+			fmt.Printf("  %s %s - %s\n", green(result.Status.Symbol), displayName, blue(result.Status.Branch))
 		} else if result.Status.Branch != "" {
-			// Other unsync status with branch - show branch name in blue
-			message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+			message := fmt.Sprintf("%s %s", result.Status.Symbol, displayName)
 			fmt.Printf("  %s - %s\n", red(message), blue(result.Status.Branch))
 		} else {
-			// Regular unsync status - all red
-			message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+			message := fmt.Sprintf("%s %s", result.Status.Symbol, displayName)
 			fmt.Printf("  %s\n", red(message))
 		}
 		r.displayBehindBranches(result)
 	case git.StatusError:
-		// Red error
-		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+		message := fmt.Sprintf("%s %s", result.Status.Symbol, displayName)
 		fmt.Printf("  %s\n", red(message))
 		r.displayBehindBranches(result)
+	case git.StatusBrokenSymlink:
+		message := fmt.Sprintf("🔗 ✗ %s (broken symlink)", displayName)
+		fmt.Printf("  %s\n", red(message))
 	case git.StatusNoUpstream:
-		// Yellow/default for no upstream
-		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+		message := fmt.Sprintf("%s %s", result.Status.Symbol, displayName)
 		fmt.Printf("  %s\n", message)
 		r.displayBehindBranches(result)
 	default:
-		// Default color
-		message := fmt.Sprintf("%s %s", result.Status.Symbol, result.Name)
+		message := fmt.Sprintf("%s %s", result.Status.Symbol, displayName)
 		fmt.Printf("  %s\n", message)
 		r.displayBehindBranches(result)
 	}

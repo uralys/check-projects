@@ -11,11 +11,12 @@ import (
 type StatusType string
 
 const (
-	StatusSync       StatusType = "sync"
-	StatusUnsync     StatusType = "unsync"
-	StatusError      StatusType = "error"
-	StatusIgnored    StatusType = "ignored"
-	StatusNoUpstream StatusType = "no_upstream"
+	StatusSync          StatusType = "sync"
+	StatusUnsync        StatusType = "unsync"
+	StatusError         StatusType = "error"
+	StatusIgnored       StatusType = "ignored"
+	StatusNoUpstream    StatusType = "no_upstream"
+	StatusBrokenSymlink StatusType = "broken_symlink"
 )
 
 // BranchTracking represents the tracking status of a branch

@@ -166,6 +166,17 @@ func run(cmd *cobra.Command, args []string) error {
 			sem <- struct{}{}        // Acquire semaphore
 			defer func() { <-sem }() // Release semaphore
 
+			if proj.Repository == nil {
+				results[idx] = reporter.ProjectResult{
+					Name:          proj.Name,
+					Status:        &git.Status{Type: git.StatusBrokenSymlink, Symbol: "🔗 ✗"},
+					Category:      proj.Category,
+					IsSymlink:     proj.IsSymlink,
+					SymlinkTarget: proj.SymlinkTarget,
+				}
+				return
+			}
+
 			status, err := proj.Repository.GetStatus()
 			if err != nil {
 				// Handle error by marking as error status
@@ -177,9 +188,11 @@ func run(cmd *cobra.Command, args []string) error {
 			}
 
 			results[idx] = reporter.ProjectResult{
-				Name:     proj.Name,
-				Status:   status,
-				Category: proj.Category,
+				Name:          proj.Name,
+				Status:        status,
+				Category:      proj.Category,
+				IsSymlink:     proj.IsSymlink,
+				SymlinkTarget: proj.SymlinkTarget,
 			}
 		}(i, project)
 	}
@@ -240,8 +253,9 @@ func fetchProjects(projects []scanner.Project, concurrency int) {
 			sem <- struct{}{}        // Acquire semaphore
 			defer func() { <-sem }() // Release semaphore
 
-			// Silently fetch - ignore errors
-			_ = proj.Repository.Fetch()
+			if proj.Repository != nil {
+				_ = proj.Repository.Fetch()
+			}
 
 			mu.Lock()
 			completed++

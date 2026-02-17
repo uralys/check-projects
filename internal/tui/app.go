@@ -52,6 +52,14 @@ func scanProjectsCmd(cfg *config.Config) tea.Cmd {
 				sem <- struct{}{}        // Acquire semaphore
 				defer func() { <-sem }() // Release semaphore
 
+				if proj.Repository == nil {
+					results[idx] = ProjectWithStatus{
+						Project: proj,
+						Status:  &git.Status{Type: git.StatusBrokenSymlink, Symbol: "🔗 ✗"},
+					}
+					return
+				}
+
 				status, err := proj.Repository.GetStatus()
 				if err != nil {
 					// Handle error by marking as error status
@@ -81,6 +89,10 @@ func scanProjectsCmd(cfg *config.Config) tea.Cmd {
 // fetchProjectCmd fetches a single project and refreshes its status
 func fetchProjectCmd(projectWithStatus *ProjectWithStatus, projectIndex int) tea.Cmd {
 	return func() tea.Msg {
+		if projectWithStatus.Project.Repository == nil {
+			return fetchCompleteMsg{projectIndex: projectIndex, err: nil}
+		}
+
 		// Fetch from remote
 		if err := projectWithStatus.Project.Repository.Fetch(); err != nil {
 			return fetchCompleteMsg{

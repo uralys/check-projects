@@ -300,14 +300,19 @@ func renderProjectsList(m Model, width, height int) string {
 				} else {
 					renderedStatus = statusUnsyncStyle.Render(statusSymbol)
 				}
-			case "error":
+			case "error", "broken_symlink":
 				renderedStatus = statusErrorStyle.Render(statusSymbol)
 			}
 		} else {
 			renderedStatus = statusSymbol
 		}
 
-		line := fmt.Sprintf("%s%s %s", prefix, renderedStatus, style.Render(p.Project.Name))
+		projectLabel := p.Project.Name
+		if p.Project.IsSymlink && p.Project.SymlinkTarget != "" {
+			projectLabel = fmt.Sprintf("%s -> %s", p.Project.Name, p.Project.SymlinkTarget)
+		}
+
+		line := fmt.Sprintf("%s%s %s", prefix, renderedStatus, style.Render(projectLabel))
 
 		// Add fetching indicator if this project is being fetched
 		for j, fullProj := range m.projects {
@@ -375,6 +380,16 @@ func renderDetailsPanel(m Model, width, height int) string {
 
 	// Path
 	contentLines = append(contentLines, labelStyle.Render(selectedProj.Project.Path))
+
+	// Broken symlink - show target info and return early
+	if selectedProj.Status != nil && selectedProj.Status.Type == "broken_symlink" {
+		contentLines = append(contentLines, "")
+		contentLines = append(contentLines, statusErrorStyle.Render("Broken symlink"))
+		if selectedProj.Project.SymlinkTarget != "" {
+			contentLines = append(contentLines, statusErrorStyle.Render("Target: ")+selectedProj.Project.SymlinkTarget)
+		}
+		return renderDetailsPanelContent(contentLines, width, height, 0, false)
+	}
 
 	// If fetching, show loader and return early
 	if isFetching {

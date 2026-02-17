@@ -11,10 +11,12 @@ import (
 
 // Project represents a discovered project
 type Project struct {
-	Name       string
-	Path       string
-	Category   string
-	Repository *git.Repository
+	Name          string
+	Path          string
+	Category      string
+	Repository    *git.Repository
+	IsSymlink     bool
+	SymlinkTarget string
 }
 
 // Scanner scans for projects based on configuration
@@ -95,12 +97,77 @@ func (s *Scanner) scanRecursiveHelper(basePath, currentPath, categoryName string
 	}
 
 	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
 		name := entry.Name()
 		fullPath := filepath.Join(currentPath, name)
+
+		isDir := entry.IsDir()
+		isSymlink := entry.Type()&os.ModeSymlink != 0
+		symlinkTarget := ""
+
+		if !isDir && isSymlink {
+			target, err := os.Readlink(fullPath)
+			if err != nil {
+				continue
+			}
+			if !filepath.IsAbs(target) {
+				target = filepath.Join(currentPath, target)
+			}
+			symlinkTarget = target
+
+			// Skip ignored before any expensive I/O on the target
+			if s.shouldIgnore(name) {
+				continue
+			}
+
+			// Try git repo check first (single stat on target/.git)
+			if git.IsGitRepository(fullPath) {
+				relPath, relErr := filepath.Rel(basePath, fullPath)
+				if relErr != nil {
+					relPath = name
+				}
+				if !s.isIgnored(relPath, ignored) {
+					*projects = append(*projects, Project{
+						Name:          relPath,
+						Path:          fullPath,
+						Category:      categoryName,
+						Repository:    git.NewRepository(fullPath, relPath),
+						IsSymlink:     true,
+						SymlinkTarget: symlinkTarget,
+					})
+				}
+				continue
+			}
+
+			// Not a git repo: check if it's a directory to recurse into
+			info, err := os.Lstat(target)
+			if err != nil {
+				// Broken symlink
+				relPath, relErr := filepath.Rel(basePath, fullPath)
+				if relErr != nil {
+					relPath = name
+				}
+				if !s.isIgnored(relPath, ignored) {
+					*projects = append(*projects, Project{
+						Name:          relPath,
+						Path:          fullPath,
+						Category:      categoryName,
+						IsSymlink:     true,
+						SymlinkTarget: symlinkTarget,
+					})
+				}
+				continue
+			}
+
+			if !info.IsDir() {
+				continue
+			}
+
+			// Symlink to a non-git directory: recurse
+			s.scanRecursiveHelper(basePath, fullPath, categoryName, ignored, projects)
+			continue
+		} else if !isDir {
+			continue
+		}
 
 		// Skip ignored directories (hardcoded)
 		if s.shouldIgnore(name) {
@@ -109,13 +176,11 @@ func (s *Scanner) scanRecursiveHelper(basePath, currentPath, categoryName string
 
 		// If this directory is a git repo, check if it should be added
 		if git.IsGitRepository(fullPath) {
-			// Calculate relative path from basePath
 			relPath, err := filepath.Rel(basePath, fullPath)
 			if err != nil {
 				relPath = name
 			}
 
-			// Check if this project matches any ignored pattern
 			if !s.isIgnored(relPath, ignored) {
 				*projects = append(*projects, Project{
 					Name:       relPath,
@@ -125,7 +190,6 @@ func (s *Scanner) scanRecursiveHelper(basePath, currentPath, categoryName string
 				})
 			}
 
-			// Don't scan inside git repositories (nested repos are not scanned)
 			continue
 		}
 
