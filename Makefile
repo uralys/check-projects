@@ -1,4 +1,4 @@
-.PHONY: build install clean test release help
+.PHONY: build install clean test release tag help
 
 BINARY_NAME=check-projects
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -38,6 +38,9 @@ release: clean ## Build binaries for all platforms
 	GOOS=linux GOARCH=arm64 go build ${LDFLAGS} -o dist/${BINARY_NAME}-linux-arm64 ./cmd/check-projects
 	GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o dist/${BINARY_NAME}-windows-amd64.exe ./cmd/check-projects
 	@echo "✔ Release binaries built in dist/"
+
+tag: ## Tag a new version and prompt to push
+	@./scripts/tag-version.sh
 
 run: build ## Build and run
 	./bin/${BINARY_NAME}
