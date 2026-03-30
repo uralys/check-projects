@@ -215,6 +215,9 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Handle branches that are behind their remote
+	handleBehindBranches(projects, results)
+
 	// Check if update is available (non-blocking read)
 	select {
 	case result := <-updateCh:
@@ -349,4 +352,99 @@ func handleNoUpstream(cfg *config.Config, projects []scanner.Project, results []
 		}
 	}
 	return nil
+}
+
+func handleBehindBranches(projects []scanner.Project, results []reporter.ProjectResult) {
+	type behindEntry struct {
+		projectIdx  int
+		branchIdx   int
+		repoName    string
+		branch      string
+		message     string
+	}
+
+	var entries []behindEntry
+	for i, result := range results {
+		for j, bt := range result.Status.BehindBranches {
+			entries = append(entries, behindEntry{
+				projectIdx: i,
+				branchIdx:  j,
+				repoName:   result.Name,
+				branch:     bt.Branch,
+				message:    bt.Message,
+			})
+		}
+	}
+
+	if len(entries) == 0 {
+		return
+	}
+
+	// Phase 1: collect user responses
+	confirmed := make([]bool, len(entries))
+	fmt.Println()
+	for i, entry := range entries {
+		fmt.Printf("\033[38;5;208mPull %s for %s?\033[0m \033[92m(Y/n):\033[0m ", entry.branch, entry.repoName)
+
+		var response string
+		if _, err := fmt.Scanln(&response); err != nil {
+			response = "y"
+		}
+
+		confirmed[i] = response != "n" && response != "N"
+	}
+
+	// Count confirmed entries
+	var toPull []behindEntry
+	for i, entry := range entries {
+		if confirmed[i] {
+			toPull = append(toPull, entry)
+		}
+	}
+
+	if len(toPull) == 0 {
+		return
+	}
+
+	// Phase 2: pull with progress bar
+	total := len(toPull)
+	completed := 0
+	var errors []string
+
+	printPullProgress := func() {
+		barWidth := 20
+		progress := float64(completed) / float64(total)
+		filled := int(progress * float64(barWidth))
+
+		bar := ""
+		for i := 0; i < barWidth; i++ {
+			if i < filled {
+				bar += "█"
+			} else {
+				bar += "░"
+			}
+		}
+
+		fmt.Printf("\rPulling [%s] %d/%d repos", bar, completed, total)
+	}
+
+	printPullProgress()
+
+	for _, entry := range toPull {
+		repo := projects[entry.projectIdx].Repository
+		if repo == nil {
+			errors = append(errors, fmt.Sprintf("❌ No repository available for %s", entry.repoName))
+		} else if err := repo.Pull(entry.branch); err != nil {
+			errors = append(errors, fmt.Sprintf("❌ Failed to pull %s for %s: %v", entry.branch, entry.repoName, err))
+		}
+
+		completed++
+		printPullProgress()
+	}
+
+	fmt.Println()
+
+	for _, errMsg := range errors {
+		fmt.Println(errMsg)
+	}
 }

@@ -78,3 +78,18 @@ func (r *Repository) SetUpstream() error {
 
 	return nil
 }
+
+// Pull runs git pull origin <branch> to update a specific branch
+func (r *Repository) Pull(branch string) error {
+	cmd := exec.Command("git", "pull", "origin", branch)
+	cmd.Dir = r.Path
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("pull failed: %s", stderr.String())
+	}
+
+	return nil
+}
