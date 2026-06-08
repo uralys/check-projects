@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	configPath  string
-	verbose     bool
-	category    string
-	useTUI      bool
-	fetchFlag   bool
-	updateFlag  bool
+	configPath string
+	verbose    bool
+	category   string
+	useTUI     bool
+	fetchFlag  bool
+	updateFlag bool
 
 	// Version information (set by ldflags during build)
 	Version   = "dev"
@@ -361,17 +361,19 @@ func handleBehindBranches(projects []scanner.Project, results []reporter.Project
 		repoName    string
 		branch      string
 		message     string
+		viaWorktree bool
 	}
 
 	var entries []behindEntry
 	for i, result := range results {
 		for j, bt := range result.Status.BehindBranches {
 			entries = append(entries, behindEntry{
-				projectIdx: i,
-				branchIdx:  j,
-				repoName:   result.Name,
-				branch:     bt.Branch,
-				message:    bt.Message,
+				projectIdx:  i,
+				branchIdx:   j,
+				repoName:    result.Name,
+				branch:      bt.Branch,
+				message:     bt.Message,
+				viaWorktree: bt.Branch != result.Status.Branch,
 			})
 		}
 	}
@@ -384,7 +386,11 @@ func handleBehindBranches(projects []scanner.Project, results []reporter.Project
 	confirmed := make([]bool, len(entries))
 	fmt.Println()
 	for i, entry := range entries {
-		fmt.Printf("\033[38;5;208mPull %s for %s?\033[0m \033[92m(Y/n):\033[0m ", entry.branch, entry.repoName)
+		suffix := ""
+		if entry.viaWorktree {
+			suffix = " \033[90m(via worktree)\033[0m"
+		}
+		fmt.Printf("\033[38;5;208mPull %s for %s?%s\033[0m \033[92m(Y/n):\033[0m ", entry.branch, entry.repoName, suffix)
 
 		var response string
 		if _, err := fmt.Scanln(&response); err != nil {
