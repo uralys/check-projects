@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 
-# Tag a new release for check-projects.
-# Flow: generate changelog -> test -> build -> commit changelog -> tag.
-# Pushing is left to you (printed at the end).
+# Tag and publish a new release for check-projects.
+# Flow: generate changelog -> test -> build -> commit changelog -> tag -> push.
 # Usage: ./scripts/tag-version.sh [patch|minor|major]
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -147,8 +146,21 @@ echo ""
 echo "Commit: $(git log -1 --oneline)"
 echo "Tag:    v${NEW_VERSION}"
 echo ""
-echo "When ready, push:"
-echo "  git push --follow-tags"
+
+# --- 6. Push ----------------------------------------------------------------
+
+read -p "Push to remote? (Y/n): " -n 1 -r
 echo ""
-echo "Pushing the tag triggers the GitHub release."
+
+if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+  echo "🚀 Pushing to remote..."
+  git push --follow-tags
+  echo ""
+  echo "✅ Pushed! Pushing the tag triggers the GitHub release."
+  echo "Monitor: https://github.com/uralys/check-projects/actions"
+else
+  echo ""
+  echo "⏭️  Skipped push. Push manually with:"
+  echo "  git push --follow-tags"
+fi
 echo ""
