@@ -4,6 +4,7 @@ All notable changes to check-projects will be listed here.
 
 ## Versions
 
+- [v1.2.19](./1.2.19.md) - 2026-06-08 - patch release
 - [v1.2.18](./1.2.18.md) - 2026-06-08 - patch release
 - [v1.2.17](./1.2.17.md) - 2026-06-08 - Revamped `make tag` workflow
 - [v1.2.16](./1.2.16.md) - 2026-06-08 - Pull non-current branches through a temporary worktree
